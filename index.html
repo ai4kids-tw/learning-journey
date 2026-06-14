@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>AI4Kids 學習歷程系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --cyan:#02bdc7; --cyan-deep:#0a7d84; --yellow:#e8ba51; --pink:#FC4067; --gray:#54595f; --dark:#0A1A2E;
+  --cyan-soft:#e3f7f8; --yellow-soft:#fbf3de; --pink-soft:#ffe5ec; --gray-soft:#eef1f3;
+  --bg:#f4f6f8; --card:#ffffff; --ink:#16263b; --ink2:#5c6773; --line:#e8edf1; --muted:#9aa4ae;
+  --r-lg:22px; --r-md:16px; --r-sm:12px;
+  --sh-sm:0 2px 8px rgba(16,38,59,.05); --sh-md:0 8px 26px rgba(16,38,59,.08); --sh-lg:0 16px 44px rgba(16,38,59,.12);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Noto Sans TC',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--ink); line-height:1.65; -webkit-font-smoothing:antialiased}
+.app{max-width:480px; margin:0 auto; min-height:100vh; position:relative; padding-bottom:96px}
+button{font-family:inherit; cursor:pointer; border:0; background:none}
+input,select,textarea{font-family:inherit; font-size:16px; color:var(--ink)}
+.ic{width:1em; height:1em; display:inline-block; vertical-align:-.13em; flex:none}
+.topbar{position:sticky; top:0; z-index:30; background:rgba(255,255,255,.92); backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:11px 18px}
+.topbar .logo{height:24px}
+.identity{display:flex; align-items:center; gap:9px}
+.id-chip{display:flex; align-items:center; gap:7px; background:var(--cyan-soft); color:var(--cyan-deep); padding:6px 12px; border-radius:999px; font-size:13px; font-weight:700}
+.id-chip .ic{font-size:15px}
+.switch-btn{display:flex; align-items:center; gap:5px; color:var(--ink2); font-size:13px; font-weight:600; padding:6px 4px}
+.switch-btn .ic{font-size:16px}
+.page{padding:18px}
+.card{background:var(--card); border-radius:var(--r-lg); box-shadow:var(--sh-md); padding:22px; margin-bottom:18px; border:1px solid rgba(232,237,241,.7)}
+.eyebrow{display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:700; letter-spacing:.6px; color:var(--cyan-deep); text-transform:uppercase}
+.h1{font-size:25px; font-weight:900; letter-spacing:-.3px; margin:8px 0 4px; line-height:1.25}
+.h2{font-size:18px; font-weight:900; margin:0; display:flex; align-items:center; gap:11px; letter-spacing:-.2px}
+.h2 .badge-ic{width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:20px; flex:none}
+.sub{color:var(--ink2); font-size:14px; margin:6px 0 0}
+label.fld{display:block; font-weight:700; font-size:14.5px; margin:18px 0 8px; color:var(--ink)}
+label.fld .q{display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:7px; background:var(--cyan-soft); color:var(--cyan-deep); font-size:13px; font-weight:900; margin-right:8px}
+.input{width:100%; padding:14px 15px; border:1.8px solid var(--line); border-radius:var(--r-sm); background:#fcfdfe; outline:none; transition:.16s}
+.input:focus{border-color:var(--cyan); background:#fff; box-shadow:0 0 0 4px var(--cyan-soft)}
+textarea.input{min-height:92px; resize:vertical; line-height:1.6}
+select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2354595f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 13px center; padding-right:42px}
+.hint{font-size:12.5px; color:var(--muted); margin-top:8px; display:flex; align-items:center; gap:6px}
+.warn{font-size:13px; color:var(--pink); margin-top:8px; min-height:18px; font-weight:600; display:flex; align-items:center; gap:6px}
+.warn:empty{min-height:0}
+.btn{width:100%; display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius:14px; padding:16px; font-size:16px; font-weight:800; color:#fff; background:linear-gradient(135deg,var(--cyan),#06a9b2); box-shadow:0 8px 20px rgba(2,189,199,.3); transition:.16s; margin-top:8px}
+.btn:active{transform:translateY(1px)}
+.btn.pink{background:linear-gradient(135deg,var(--pink),#e8325a); box-shadow:0 8px 20px rgba(252,64,103,.28)}
+.btn.ghost{background:var(--gray-soft); color:var(--gray); box-shadow:none}
+.btn.line{background:#fff; color:var(--cyan-deep); border:1.8px solid var(--cyan); box-shadow:none}
+.btn.sm{width:auto; padding:10px 16px; font-size:14px; border-radius:999px}
+.btn[disabled]{opacity:.5; pointer-events:none}
+.row{display:flex; gap:12px}
+.row>*{flex:1}
+.prog-top{display:flex; align-items:flex-end; gap:14px; margin-top:14px}
+.pct{font-size:40px; font-weight:900; letter-spacing:-1px; line-height:1; color:var(--cyan)}
+.pct small{font-size:16px; font-weight:800; color:var(--muted)}
+.bar{flex:1; height:12px; background:#eaeef1; border-radius:999px; overflow:hidden; margin-bottom:6px}
+.bar>i{display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--cyan),var(--yellow)); transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.stamps{display:grid; grid-template-columns:repeat(5,1fr); gap:9px; margin-top:20px}
+.stamp{display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center}
+.stamp .disc{width:100%; aspect-ratio:1; max-width:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:21px; border:2px dashed #d4dbe1; color:#bcc5cd; background:#fafcfd; transition:.2s}
+.stamp.done .disc{border:0; color:#fff; box-shadow:var(--sh-sm)}
+.stamp.done.c0 .disc{background:linear-gradient(140deg,var(--cyan),#06a9b2)}
+.stamp.done.c1 .disc{background:linear-gradient(140deg,var(--yellow),#dba63a)}
+.stamp.done.c2 .disc{background:linear-gradient(140deg,var(--pink),#e8325a)}
+.stamp.done.c3 .disc{background:linear-gradient(140deg,var(--cyan-deep),#0a6d73)}
+.stamp.done.c4 .disc{background:linear-gradient(140deg,#22416a,#0e2138)}
+.stamp .nm{font-size:11px; font-weight:700; color:var(--ink2)}
+.stamp.done .nm{color:var(--ink)}
+.todo{list-style:none; padding:0; margin:0}
+.todo li{display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--line); font-size:15px; color:var(--ink)}
+.todo li:last-child{border-bottom:0}
+.todo .tick{width:24px; height:24px; border-radius:8px; border:2px solid #d0d8de; display:flex; align-items:center; justify-content:center; color:#fff; flex:none; font-size:14px}
+.todo li.ok .tick{background:var(--cyan); border-color:var(--cyan)}
+.todo li.ok .lbl{color:var(--muted); text-decoration:line-through}
+.grid{display:grid; grid-template-columns:1fr 1fr; gap:13px}
+.tile{background:#fff; border-radius:var(--r-md); box-shadow:var(--sh-sm); padding:18px 16px; text-align:left; border:1px solid rgba(232,237,241,.8); display:flex; flex-direction:column; gap:12px; transition:.16s; position:relative; overflow:hidden}
+.tile:active{transform:translateY(1px)}
+.tile .ti-ic{width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:21px}
+.tile .ti-t{font-weight:800; font-size:15.5px}
+.tile .ti-badge{font-size:12px; font-weight:700; color:var(--ink2)}
+.tile .ti-badge b{color:var(--cyan-deep)}
+.opts{display:flex; flex-wrap:wrap; gap:9px; margin-top:2px}
+.opt{border:1.8px solid var(--line); background:#fff; border-radius:999px; padding:10px 16px; font-size:14.5px; font-weight:600; color:var(--gray); transition:.14s; display:inline-flex; align-items:center; gap:7px}
+.opt.on{border-color:var(--cyan); background:var(--cyan-soft); color:var(--cyan-deep); font-weight:800}
+.opt.single.on{border-color:var(--pink); background:var(--pink-soft); color:#c41f44}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px}
+.chip{background:var(--yellow-soft); color:#9a6a13; border:1.5px solid #f0dcad; border-radius:999px; padding:7px 13px; font-size:13px; font-weight:600; transition:.14s}
+.chip:active{transform:scale(.96)}
+.stars{display:flex; gap:8px; margin-top:8px}
+.stars .st{font-size:32px; color:#e1e7ec; transition:.12s; line-height:1}
+.stars .st.on{color:var(--yellow)}
+.modeswitch{display:flex; background:var(--gray-soft); border-radius:999px; padding:5px; margin:2px 0 0}
+.modeswitch button{flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:11px; border-radius:999px; font-weight:800; color:var(--ink2); font-size:14.5px; transition:.18s}
+.modeswitch button.on{background:#fff; color:var(--cyan-deep); box-shadow:var(--sh-sm)}
+.modeswitch button .ic{font-size:17px}
+.chat{display:flex; flex-direction:column; gap:4px; margin-top:6px}
+.bubble{display:flex; gap:10px; margin:7px 0; max-width:90%; animation:rise .28s ease}
+@keyframes rise{from{opacity:0; transform:translateY(8px)}}
+.bubble.bot .av{width:34px; height:34px; border-radius:11px; background:linear-gradient(140deg,var(--cyan),var(--cyan-deep)); display:flex; align-items:center; justify-content:center; color:#fff; flex:none; font-size:18px; box-shadow:var(--sh-sm)}
+.bubble .btxt{background:var(--gray-soft); padding:12px 15px; border-radius:4px 16px 16px 16px; font-size:15px; color:var(--ink)}
+.bubble.me{margin-left:auto; flex-direction:row-reverse}
+.bubble.me .btxt{background:linear-gradient(135deg,var(--cyan-soft),#d4f3f5); color:var(--cyan-deep); border-radius:16px 4px 16px 16px; font-weight:600}
+.chat-input{margin-top:12px; animation:rise .3s}
+.send-row{display:flex; gap:10px; align-items:flex-end; margin-top:10px}
+.send-row textarea{flex:1; min-height:50px}
+.send-btn{width:52px; height:52px; border-radius:14px; background:linear-gradient(135deg,var(--cyan),#06a9b2); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; flex:none; box-shadow:0 6px 16px rgba(2,189,199,.3)}
+.confirm-row{display:flex; gap:10px; margin-top:12px}
+.confirm-row button{flex:1; padding:13px; border-radius:13px; font-weight:800; font-size:15px}
+.cf-yes{background:linear-gradient(135deg,var(--cyan),#06a9b2); color:#fff}
+.cf-no{background:var(--gray-soft); color:var(--gray)}
+.summary-card{background:linear-gradient(140deg,var(--cyan-soft),#eafafb); border:1.5px solid #c5edf0; border-radius:var(--r-md); padding:16px 17px; margin-top:8px; font-size:15px; line-height:1.7; color:var(--ink)}
+.summary-card .tag{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:var(--cyan-deep); margin-bottom:8px}
+.wall{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
+.work{border-radius:var(--r-md); overflow:hidden; background:#f1f4f6; position:relative; border:1px solid var(--line); box-shadow:var(--sh-sm)}
+.work .thumb{height:118px; display:block; width:100%; object-fit:cover}
+.work .file{height:118px; display:flex; align-items:center; justify-content:center; color:var(--cyan-deep); font-size:34px; background:var(--cyan-soft)}
+.work .cap{padding:9px 11px; font-size:12.5px; color:var(--gray); line-height:1.4}
+.work .tag{position:absolute; top:8px; left:8px; background:rgba(10,26,46,.82); color:#fff; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; display:flex; align-items:center; gap:4px}
+.work .del{position:absolute; top:8px; right:8px; background:rgba(252,64,103,.95); color:#fff; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px}
+.chal{border:1.5px solid var(--line); border-radius:var(--r-md); padding:15px; margin-bottom:12px; background:#fcfdfe}
+.chal .st{font-size:11px; font-weight:800; padding:3px 11px; border-radius:999px; color:#fff; display:inline-flex; align-items:center; gap:5px}
+.chal .st.open{background:var(--yellow)} .chal .st.solved{background:var(--cyan)}
+.jrow{padding:18px 0; border-bottom:1px solid var(--line)}
+.jrow:last-child{border-bottom:0}
+.jrow .lab{font-weight:900; font-size:16.5px; display:flex; align-items:center; gap:10px; margin-bottom:11px}
+.jrow .lab .ji{width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; flex:none}
+.tag-day{display:inline-block; background:var(--cyan-soft); color:var(--cyan-deep); font-size:12px; font-weight:800; padding:2px 9px; border-radius:7px; margin-right:7px}
+.jcover{text-align:center; border-bottom:2.5px solid var(--cyan); padding-bottom:18px; margin-bottom:4px}
+.jcover .logo{height:30px; margin-bottom:10px}
+/* 我的歷程／PDF：成果完整顯示，不裁切（直式獎狀才不會被切） */
+#journeyDoc .work .thumb{height:auto; max-height:480px; object-fit:contain; background:#f1f4f6}
+.tabbar{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:rgba(255,255,255,.95); backdrop-filter:blur(10px); border-top:1px solid var(--line); display:flex; z-index:30; padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 0; color:var(--muted); font-size:11px; font-weight:700}
+.tabbar button .ic{font-size:22px}
+.tabbar button.on{color:var(--cyan)}
+.modal-bg{position:fixed; inset:0; background:rgba(10,26,46,.5); backdrop-filter:blur(2px); display:flex; align-items:center; justify-content:center; padding:24px; z-index:50; animation:fade .2s}
+@keyframes fade{from{opacity:0}}
+.modal{background:#fff; border-radius:24px; padding:26px; max-width:380px; width:100%; box-shadow:var(--sh-lg); animation:rise .25s}
+.modal h3{margin:0 0 8px; font-size:19px; font-weight:900; display:flex; align-items:center; gap:9px}
+.modal .mic{width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:21px; margin-bottom:12px}
+.toast{position:fixed; bottom:108px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff; padding:12px 20px; border-radius:999px; font-size:14px; font-weight:600; z-index:60; box-shadow:var(--sh-lg); display:flex; align-items:center; gap:8px; animation:rise .25s; max-width:90%}
+.toast .ic{color:var(--cyan)}
+.toast.err .ic{color:var(--pink)}
+.empty{text-align:center; color:var(--muted); padding:26px 0; font-size:14px}
+.code-box{background:var(--cyan-soft); border-radius:14px; padding:18px; text-align:center; margin:14px 0}
+.code-box .n{font-size:30px; font-weight:900; letter-spacing:8px; color:var(--cyan-deep)}
+.bg-cyan{background:var(--cyan-soft); color:var(--cyan-deep)}
+.bg-yellow{background:var(--yellow-soft); color:#9a6a13}
+.bg-pink{background:var(--pink-soft); color:#c41f44}
+.bg-gray{background:var(--gray-soft); color:var(--gray)}
+.loading{display:flex; flex-direction:column; align-items:center; gap:14px; padding:60px 0; color:var(--muted)}
+.spinner{width:38px; height:38px; border:3.5px solid var(--cyan-soft); border-top-color:var(--cyan); border-radius:50%; animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media print{
+  body{background:#fff}
+  .app{max-width:100%; padding:0}
+  .topbar,.tabbar,.noprint{display:none !important}
+  .card{box-shadow:none; border:1px solid #dde3e8; page-break-inside:avoid}
+  .page{padding:0}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div class="tabbar noprint" id="tabbar"></div>
+
+<script>
+/* =========================================================================
+   AI4Kids 學習歷程系統 — 正式前端（呼叫 GAS Web App）
+   ========================================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwDkqs06qVhzWhwc0rL6ModIjy5MeEM50CS0f4p5nph_VT2ingrrnP9VT6_bpbWGqoEfQ/exec';
+
+/* ----------------------------- API 層 ----------------------------- */
+async function apiGet(action, params){
+  const qs = new URLSearchParams(Object.assign({action:action}, params||{})).toString();
+  const r = await fetch(API_URL + '?' + qs);
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || '讀取失敗');
+  return j.data;
+}
+async function apiPost(action, body){
+  const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, body||{})) });
+  const j = await r.json();
+  if(!j.ok) throw new Error(j.error || '儲存失敗');
+  if(/^(save|add|update)/.test(action)) invalidateJourney();
+  return j.data;
+}
+function authp(extra){ return Object.assign({ studentId:ME.studentId, pin:ME.pin, campId:ME.campId, batch:ME.batch }, extra||{}); }
+// 學習歷程前端快取（換頁不重抓；寫入後失效）
+let JCACHE=null;
+async function loadJourney(){ if(JCACHE) return JCACHE; JCACHE=await apiGet('getMyJourney', authp()); return JCACHE; }
+function invalidateJourney(){ JCACHE=null; }
+
+/* ----------------------------- SVG icon ----------------------------- */
+const ICONS={
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  note:'<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  puzzle:'<path d="M9 3.5a2 2 0 0 1 4 0c0 .5-.2 1-.5 1.5H15a1.5 1.5 0 0 1 1.5 1.5v2.5c.5-.3 1-.5 1.5-.5a2 2 0 0 1 0 4c-.5 0-1-.2-1.5-.5V15a1.5 1.5 0 0 1-1.5 1.5h-2.5c.3.5.5 1 .5 1.5a2 2 0 0 1-4 0c0-.5.2-1 .5-1.5H6.5A1.5 1.5 0 0 1 5 15v-2.5c-.5.3-1 .5-1.5.5a2 2 0 0 1 0-4c.5 0 1 .2 1.5.5V7A1.5 1.5 0 0 1 6.5 5.5H9C8.7 5 8.5 4.5 8.5 4"/>',
+  award:'<circle cx="12" cy="9" r="6"/><path d="M9 14.5 8 22l4-2.3L16 22l-1-7.5"/>',
+  sprout:'<path d="M12 21V11"/><path d="M12 11C12 7.5 9.5 5 5.5 5 5.5 9 8 11 12 11Z"/><path d="M12 11c0-3 2.2-5.2 6-5.2 0 3.4-2.5 5.2-6 5.2Z"/><path d="M8 21h8"/>',
+  home:'<path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
+  camera:'<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z"/><circle cx="12" cy="13" r="4"/>',
+  image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>',
+  file:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  switch:'<path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>',
+  send:'<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/>',
+  zap:'<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>',
+  chat:'<path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8Z"/>',
+  plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  mail:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/>',
+  arrow:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  star:'<path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.9 6.1 20.9l1.2-6.5L2.5 9.4l6.6-.9z"/>'
+};
+function icon(n){ return `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`; }
+function iconFill(n){ return `<svg class="ic" viewBox="0 0 24 24" fill="currentColor" stroke="none">${ICONS[n]||''}</svg>`; }
+const SECTION={
+  motivation:{ic:'target', bg:'bg-cyan', name:'學習動機'},
+  reflection:{ic:'note', bg:'bg-pink', name:'課後心得'},
+  challenge:{ic:'puzzle', bg:'bg-yellow', name:'挑戰紀錄'},
+  outcome:{ic:'award', bg:'bg-cyan', name:'學習成果'},
+  final:{ic:'sprout', bg:'bg-pink', name:'結業反思'},
+  journey:{ic:'book', bg:'bg-gray', name:'我的歷程'},
+};
+
+/* ----------------------------- 狀態 / 工具 ----------------------------- */
+const ID_KEY='ai4kids_lj_identity';
+let ME=JSON.parse(localStorage.getItem(ID_KEY)||'null'); // {studentId,pin,campId,batch,name}
+if(ME && !ME.studentId){ ME=null; localStorage.removeItem(ID_KEY); } // 清除舊版（email）登入狀態
+const app=document.getElementById('app'), tabbar=document.getElementById('tabbar');
+function setMe(o){ME=o;localStorage.setItem(ID_KEY,JSON.stringify(o));}
+function logout(){localStorage.removeItem(ID_KEY);ME=null;JCACHE=null;go('login');}
+function go(r){location.hash='#/'+r;}
+function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function toast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.innerHTML=icon(isErr?'info':'check')+esc(msg);document.body.appendChild(t);setTimeout(()=>t.remove(),isErr?2600:1900);}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtMD(s){const p=String(s).split('-');return p.length===3?(+p[1])+'/'+(+p[2]):s;}
+const LOGO='assets/ai4kids-logo.png';
+
+/* ----------------------------- 路由 ----------------------------- */
+const ROUTES=['login','home','motivation','reflection','challenge','outcome','final','journey','admin'];
+function currentRoute(){const h=location.hash.replace('#/','');return ROUTES.includes(h)?h:(ME?'home':'login');}
+async function render(){
+  const r=currentRoute();
+  if(r!=='login'&&r!=='admin'&&!ME){go('login');return;}
+  window.scrollTo(0,0);
+  renderTabbar(r);
+  try{
+    await ({login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
+  }catch(e){ renderError(e); }
+}
+window.addEventListener('hashchange', render);
+function renderError(e){
+  app.innerHTML=topbar()+`<div class="page"><div class="card" style="text-align:center">
+    <div class="mic bg-pink" style="margin:0 auto 12px">${icon('info')}</div>
+    <div class="h2" style="justify-content:center">連線出了點狀況</div>
+    <p class="sub">${esc(e.message||'請檢查網路後再試一次')}</p>
+    <button class="btn" style="margin-top:16px" onclick="render()">重新整理</button>
+  </div></div>`;
+}
+function loadingScreen(){app.innerHTML=topbar()+`<div class="page"><div class="loading"><div class="spinner"></div><div>載入中…</div></div></div>`;}
+
+/* ----------------------------- 版型片段 ----------------------------- */
+function topbar(){
+  if(!ME) return '';
+  return `<div class="topbar noprint">
+    <img class="logo" src="${LOGO}" alt="AI4Kids" />
+    <div class="identity">
+      <span class="id-chip">${icon('user')}${esc(ME.name||'學員')}</span>
+      <button class="switch-btn" onclick="confirmSwitch()">${icon('switch')}切換</button>
+    </div></div>`;
+}
+function renderTabbar(r){if(!ME||r==='admin'){tabbar.innerHTML='';return;}
+  const tabs=[['home','home','首頁'],['reflection','note','心得'],['outcome','award','成果'],['journey','book','歷程']];
+  tabbar.innerHTML=tabs.map(([k,i,t])=>`<button class="${r===k?'on':''}" onclick="go('${k}')">${icon(i)}${t}</button>`).join('');}
+function sectionHead(key,desc){const s=SECTION[key];return `<div class="h2"><span class="badge-ic ${s.bg}">${icon(s.ic)}</span>${s.name}</div>${desc?`<p class="sub">${desc}</p>`:''}`;}
+function confirmSwitch(){showModal(`<div class="mic bg-gray">${icon('switch')}</div><h3>切換 / 登出</h3>
+  <p class="sub">會清除這台裝置的登入身分（共用裝置請務必切換）。換裝置回來時用 Email + 存取碼即可登入。</p>
+  <div class="row" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn pink" onclick="closeModal();logout()">切換身分</button></div>`);}
+function showModal(html){const bg=document.createElement('div');bg.className='modal-bg noprint';bg.id='modalbg';bg.innerHTML=`<div class="modal">${html}</div>`;bg.onclick=e=>{if(e.target===bg)closeModal()};document.body.appendChild(bg);}
+function closeModal(){document.querySelectorAll('.modal-bg').forEach(function(m){m.remove();});}
+function computeProgress(j){const total=j.courses.length,refl=j.reflection.length,chal=j.challenge.length,out=j.outcome.length;
+  const pct=Math.min(100,(j.motivation?20:0)+Math.round((total?refl/total:0)*30)+(chal>=1?15:0)+(out>=1?15:0)+(j.final?20:0));
+  return {totalCourses:total,motivationDone:!!j.motivation,reflCount:refl,chalCount:chal,outCount:out,finalDone:!!j.final,pct:pct};}
+
+/* ============================ 1) 登入 ============================ */
+let LOOKUP=null; // 暫存名冊查詢結果
+async function renderLogin(){
+  app.innerHTML=`<div class="page">
+    <div class="card" style="text-align:center; padding-top:30px">
+      <img src="${LOGO}" alt="AI4Kids" style="height:42px; margin-bottom:18px" />
+      <div class="h1">學習歷程系統</div>
+      <p class="sub" style="margin-top:2px">記錄你在營隊的每一步成長</p>
+      <div style="text-align:left; margin-top:8px">
+        <label class="fld">學員編號</label>
+        <input id="sid" class="input" placeholder="輸入助教給你的學員編號" autocapitalize="characters" oninput="this.value=this.value.toUpperCase()" />
+        <div class="warn" id="sidWarn"></div>
+      </div>
+      <button class="btn" id="startBtn" style="margin-top:20px" onclick="startLogin()">開始 ${icon('arrow')}</button>
+    </div>
+    <p class="sub" style="text-align:center">忘記編號或存取碼，請向現場助教詢問。</p>
+  </div>`;
+}
+async function startLogin(){
+  const studentId=document.getElementById('sid').value.trim();
+  if(!studentId){document.getElementById('sidWarn').innerHTML=`${icon('info')}請輸入學員編號`;return;}
+  const sbtn=document.getElementById('startBtn'); if(sbtn){sbtn.disabled=true;sbtn.textContent='查詢中…';}
+  try{
+    const r=await apiGet('lookup',{studentId:studentId});
+    if(sbtn){sbtn.disabled=false;sbtn.innerHTML='開始 '+icon('arrow');}
+    if(!r.found){document.getElementById('sidWarn').innerHTML=`${icon('info')}查無此學員編號，請向助教確認`;return;}
+    LOOKUP=Object.assign({studentId:studentId}, r);
+    showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>確認身分</h3>
+      <p class="sub">請確認以下資料是你本人：</p>
+      <div class="code-box" style="margin:14px 0;text-align:left">
+        <div style="font-size:18px;font-weight:800;color:var(--cyan-deep)">${esc(r.name)}</div>
+        <div style="font-size:13px;color:var(--ink2);margin-top:4px">${esc(r.campName)}・${esc(r.batch)}</div></div>
+      <div class="row"><button class="btn ghost" onclick="closeModal()">不是我</button><button class="btn" onclick="afterConfirm()">是我，繼續</button></div>`);
+  }catch(e){toast(e.message,true);if(sbtn){sbtn.disabled=false;sbtn.innerHTML='開始 '+icon('arrow');}}
+}
+async function afterConfirm(){
+  closeModal();
+  try{ const r=await apiGet('studentExists',{studentId:LOOKUP.studentId});
+    if(r.exists) askPin(); else askProfile();
+  }catch(e){toast(e.message,true);}
+}
+function askPin(){showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>請輸入存取碼</h3>
+  <p class="sub">歡迎回來，${esc(LOOKUP.name)}！輸入你的 4 碼存取碼登入。</p>
+  <input id="pin" class="input" inputmode="numeric" maxlength="4" placeholder="• • • •" style="text-align:center;letter-spacing:10px;font-size:24px;font-weight:800;margin-top:12px" />
+  <div class="warn" id="pinWarn"></div>
+  <button class="btn" id="loginBtn" onclick="doPinLogin()">登入</button>
+  <button class="btn ghost" style="margin-top:9px" onclick="forgotPin()">忘記存取碼？</button>`);}
+async function doPinLogin(){const pin=document.getElementById('pin').value.trim();
+  const btn=document.getElementById('loginBtn'); if(btn){btn.disabled=true;btn.textContent='登入中…';}
+  try{ const s=await apiPost('login',{studentId:LOOKUP.studentId,pin:pin});
+    setMe({studentId:LOOKUP.studentId,pin:pin,campId:s.campId,batch:s.batch,name:s.name});closeModal();invalidateJourney();toast('歡迎回來，'+s.name);go('home');
+  }catch(e){ document.getElementById('pinWarn').innerHTML=`${icon('info')}${esc(e.message)}`; if(btn){btn.disabled=false;btn.textContent='登入';} }
+}
+async function forgotPin(){
+  try{ const r=await apiPost('resendPin',{studentId:LOOKUP.studentId});
+    showModal(`<div class="mic bg-yellow">${icon('mail')}</div><h3>已寄出存取碼</h3>
+      <p class="sub">已寄到你登記的 Email，請查收後回來輸入。${r.dryRun?'<br><span style="color:var(--pink)">（測試模式：目前尚未真正寄出）</span>':''}</p>
+      <button class="btn" onclick="closeModal();askPin()">回去輸入</button>`);
+  }catch(e){ showModal(`<div class="mic bg-pink">${icon('info')}</div><h3>無法自動補發</h3><p class="sub">${esc(e.message)}</p><button class="btn" onclick="closeModal();askPin()">好</button>`); }
+}
+function askProfile(){showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>第一次來，建立你的歷程</h3>
+  <p class="sub">你是 <b>${esc(LOOKUP.name)}</b>（${esc(LOOKUP.campName)}）。</p>
+  <label class="fld">你的 Email（選填，方便自己找回存取碼）</label>
+  <input id="pEmail" class="input" type="email" inputmode="email" placeholder="沒有也沒關係，可留空" />
+  <button class="btn" id="regBtn" style="margin-top:18px" onclick="doRegister()">建立我的歷程</button>`);}
+async function doRegister(){const email=document.getElementById('pEmail').value.trim();
+  const rbtn=document.getElementById('regBtn'); if(rbtn){rbtn.disabled=true;rbtn.textContent='建立中…';}
+  try{ const r=await apiPost('register',{studentId:LOOKUP.studentId,email:email});
+    setMe({studentId:LOOKUP.studentId,pin:r.pin,campId:r.campId,batch:r.batch,name:r.name});invalidateJourney();
+    showModal(`<div class="mic bg-cyan">${icon('spark')}</div><h3>歡迎你，${esc(r.name)}！</h3>
+      <p class="sub">建檔完成。這是你的存取碼，<b>下次登入要用</b>（換裝置也用得到）。</p>
+      <div class="code-box"><div style="font-size:13px;color:var(--cyan-deep);font-weight:700;margin-bottom:4px">你的存取碼・請記下來</div><div class="n">${r.pin}</div></div>
+      <button class="btn" onclick="closeModal();go('home')">開始記錄 ${icon('arrow')}</button>`);
+  }catch(e){ toast(e.message,true); if(rbtn){rbtn.disabled=false;rbtn.textContent='建立我的歷程';} }
+}
+
+/* ============================ 2) 首頁 ============================ */
+async function renderHome(){
+  loadingScreen();
+  const j=await loadJourney();
+  const p=computeProgress(j);
+  const reflDone=new Set(j.reflection.map(r=>r.courseId));
+  const stamps=[['motivation',p.motivationDone],['reflection',p.reflCount>=p.totalCourses&&p.totalCourses>0],['challenge',p.chalCount>=1],['outcome',p.outCount>=1],['final',p.finalDone]];
+  const today=todayStr();
+  const todayCourses=j.courses.filter(c=>c.courseDate===today);
+  app.innerHTML=topbar()+`<div class="page">
+    <div class="card">
+      <div class="eyebrow">${icon('spark')}${esc(j.camp.campName)}・${esc(j.camp.batch)}</div>
+      <div class="h2" style="margin-top:10px">我的學習進度</div>
+      <div class="prog-top"><div class="pct">${p.pct}<small>%</small></div><div class="bar"><i style="width:${p.pct}%"></i></div></div>
+      <div class="stamps">${stamps.map(([k,ok],i)=>`<div class="stamp ${ok?'done c'+i:''}"><div class="disc">${ok?icon('check'):icon(SECTION[k].ic)}</div><div class="nm">${SECTION[k].name}</div></div>`).join('')}</div>
+    </div>
+    <div class="card">
+      <div class="h2"><span class="badge-ic bg-yellow">${icon('check')}</span>待完成</div>
+      <ul class="todo" style="margin-top:12px">
+        <li class="${p.motivationDone?'ok':''}"><span class="tick">${p.motivationDone?icon('check'):''}</span><span class="lbl">填寫學習動機</span></li>
+        ${(todayCourses.length?todayCourses:[]).map(c=>{const ok=reflDone.has(c.courseId);return `<li class="${ok?'ok':''}"><span class="tick">${ok?icon('check'):''}</span><span class="lbl">Day${c.day} 第${c.period}堂・${esc(c.courseName)} 心得</span></li>`}).join('')}
+        <li class="${p.outCount>=1?'ok':''}"><span class="tick">${p.outCount>=1?icon('check'):''}</span><span class="lbl">上傳學習成果（已 ${p.outCount} 件）</span></li>
+      </ul>
+    </div>
+    <div class="grid">
+      ${tile('motivation',p.motivationDone?'已完成':'待填')}
+      ${tile('reflection',`<b>${p.reflCount}</b> / ${p.totalCourses} 堂`)}
+      ${tile('challenge',`<b>${p.chalCount}</b> 筆紀錄`)}
+      ${tile('outcome',`<b>${p.outCount}</b> 件成果`)}
+      ${tile('final',p.finalDone?'已完成':'結營時填')}
+      ${tile('journey','檢視 + PDF')}
+    </div>
+  </div>`;
+}
+function tile(key,badge){const s=SECTION[key];return `<button class="tile" onclick="go('${key}')"><div class="ti-ic ${s.bg}">${icon(s.ic)}</div><div class="ti-t">${s.name}</div><div class="ti-badge">${badge}</div></button>`;}
+
+/* ============================ 聊天引擎 ============================ */
+let CHAT={draft:null,script:null};
+function chatAdvance(draft,script,val){const node=script[draft._step];draft.answers[node.id]=val;
+  if(node.type==='confirm'&&val==='yes'&&node.action)node.action(draft.answers);
+  draft._step++;
+  while(draft._step<script.length&&script[draft._step].when&&!script[draft._step].when(draft.answers)){draft.answers[script[draft._step].id]=null;draft._step++;}
+  render();}
+function chatSendText(draft,script,optional){const ta=document.getElementById('chatin');const v=(ta?ta.value:'').trim();
+  if(!v&&!optional){toast('打一點點再繼續～',true);return;}chatAdvance(draft,script,v);}
+function botAv(){return `<div class="av">${icon('chat')}</div>`;}
+function renderChat(draft,script){const step=draft._step||0;let h='<div class="chat">';
+  for(let i=0;i<=step&&i<script.length;i++){const node=script[i];const lines=typeof node.bot==='function'?node.bot(draft.answers):node.bot;
+    lines.forEach(l=>h+=`<div class="bubble bot">${botAv()}<div class="btxt">${esc(l)}</div></div>`);
+    if(i<step){const a=draft.answers[node.id];
+      if(node.type==='stars')h+=`<div class="bubble me"><div class="btxt">${'★'.repeat(a||0)}${'☆'.repeat(5-(a||0))}</div></div>`;
+      else if(node.type==='confirm')h+=`<div class="bubble me"><div class="btxt">${a==='yes'?'好啊，記下來！':'先不用'}</div></div>`;
+      else if(a)h+=`<div class="bubble me"><div class="btxt">${esc(a)}</div></div>`;
+    }else{h+=chatControl(draft,script,node);}
+  }
+  h+='</div>';return h;}
+function chatControl(draft,script,node){
+  if(node.type==='stars'){draft._star=draft._star||0;
+    return `<div class="chat-input"><div class="stars">${[1,2,3,4,5].map(n=>`<span class="st ${draft._star>=n?'on':''}" onclick="(function(){CHAT.draft._star=${n};render()})()">${iconFill('star')}</span>`).join('')}</div>
+      <button class="btn sm" style="width:100%;margin-top:12px" onclick="chatAdvance(CHAT.draft,CHAT.script,CHAT.draft._star||0)">繼續 ${icon('arrow')}</button></div>`;}
+  if(node.type==='confirm'){return `<div class="confirm-row"><button class="cf-no" onclick="chatAdvance(CHAT.draft,CHAT.script,'no')">先不用</button><button class="cf-yes" onclick="chatAdvance(CHAT.draft,CHAT.script,'yes')">${icon('puzzle')}好，記下來</button></div>`;}
+  const chips=node.chips?`<div class="chips">${node.chips.map(c=>`<span class="chip" onclick="(function(){var t=document.getElementById('chatin');t.value+='${c}';t.focus()})()">${c}</span>`).join('')}</div>`:'';
+  return `<div class="chat-input">${chips}<div class="send-row"><textarea id="chatin" class="input" placeholder="${esc(node.placeholder||'打字回答～')}"></textarea>
+    <button class="send-btn" onclick="chatSendText(CHAT.draft,CHAT.script,${node.optional?'true':'false'})">${icon('send')}</button></div></div>`;}
+
+/* ============================ 3) 學習動機 ============================ */
+let motDraft=null;
+async function renderMotivation(){
+  loadingScreen();
+  const j=await loadJourney();
+  const ex=j.motivation;
+  if(!motDraft){
+    const raw=ex?safeParse(ex.rawAnswers):null;
+    motDraft=ex?{mode:ex.mode,q1:(raw&&raw.q1)||[],q2:(raw&&raw.q2)||[],q3:(raw&&raw.q3)||'',q4:(raw&&raw.q4)||'',_step:99,answers:(raw&&raw.answers)||{}}:{mode:'select',q1:[],q2:[],q3:'',q4:'',_step:0,answers:{}};
+  }
+  const mode=motDraft.mode||'select';
+  app.innerHTML=topbar()+`<div class="page"><div class="card">
+    ${sectionHead('motivation', ex?'你已經填過囉，可以再修改。':'開營前先想想，你為什麼來～')}
+    <div class="modeswitch" style="margin-top:16px">
+      <button class="${mode==='select'?'on':''}" onclick="motDraft.mode='select';render()">${icon('zap')}快速選填</button>
+      <button class="${mode==='chat'?'on':''}" onclick="motDraft.mode='chat';motDraft._step=motDraft._step===99?0:motDraft._step;render()">${icon('chat')}對話引導</button>
+    </div>
+    ${mode==='select'?motSelect():motChat()}
+  </div></div>`;
+}
+function safeParse(s){try{return typeof s==='string'?JSON.parse(s):s;}catch(e){return {};}}
+function multiOpt(key,val){const set=new Set(motDraft[key]);set.has(val)?set.delete(val):set.add(val);motDraft[key]=[...set];render();}
+function motSelect(){const Q1=['對 AI／程式很有興趣','想做出自己的作品','朋友同學一起來','爸媽推薦','為升學／競賽準備'],Q2=['寫程式','做 AI 應用','醫療 AI','資料分析','簡報表達','團隊合作'],Q3=['完全沒有','一點點','蠻熟的'];
+  return `<label class="fld"><span class="q">1</span>為什麼想參加這個營隊？（可複選）</label>
+    <div class="opts">${Q1.map(o=>`<button class="opt ${motDraft.q1.includes(o)?'on':''}" onclick="multiOpt('q1','${o}')">${motDraft.q1.includes(o)?icon('check'):''}${o}</button>`).join('')}</div>
+    <label class="fld"><span class="q">2</span>你最想學會什麼？（可複選）</label>
+    <div class="opts">${Q2.map(o=>`<button class="opt ${motDraft.q2.includes(o)?'on':''}" onclick="multiOpt('q2','${o}')">${motDraft.q2.includes(o)?icon('check'):''}${o}</button>`).join('')}</div>
+    <label class="fld"><span class="q">3</span>以前學過相關的東西嗎？</label>
+    <div class="opts">${Q3.map(o=>`<button class="opt single ${motDraft.q3===o?'on':''}" onclick="motDraft.q3='${o}';render()">${o}</button>`).join('')}</div>
+    <label class="fld"><span class="q">4</span>學完之後，你希望能做出什麼？（可留空）</label>
+    <textarea class="input" oninput="motDraft.q4=this.value" placeholder="例如：做一個能看醫療影像的小程式">${esc(motDraft.q4)}</textarea>
+    <button class="btn" style="margin-top:18px" onclick="saveMotSelect()">儲存學習動機</button>`;}
+const MOT_SCRIPT=[
+  {id:'why',bot:['嗨，我是你的學習小幫手！開營前，我們先聊兩句～','是什麼讓你想報名這個營隊的呢？'],chips:['對 AI 很好奇','想做出自己的作品','朋友揪一起'],placeholder:'說說你的理由～'},
+  {id:'why2',bot:a=>[`「${a.why}」，聽起來不錯！可以多說一點嗎——這件事為什麼吸引你？`],placeholder:'再多講一點點～',optional:true},
+  {id:'want',bot:['那這幾天，你最期待學到、或做出什麼？'],chips:['做 AI 應用','醫療 AI','團隊合作'],placeholder:'你的期待～'},
+  {id:'curious',bot:['最後一個小問題～','有沒有什麼關於 AI、你一直很好奇、想搞懂的問題？'],chips:['AI 怎麼看懂圖片','AI 會不會取代醫生','機器怎麼學習'],placeholder:'寫下你心裡的疑問（可留空）',optional:true},
+];
+function motChat(){CHAT={draft:motDraft,script:MOT_SCRIPT};
+  if((motDraft._step||0)>=MOT_SCRIPT.length){const sum=buildMotSummary();
+    return renderChat(motDraft,MOT_SCRIPT)+`<div class="summary-card" style="margin-top:14px"><div class="tag">${icon('spark')}幫你整理成一段話</div>${esc(sum)}</div>
+      <button class="btn" onclick="saveMotChat()">確認送出</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="motDraft._step=0;motDraft.answers={};render()">重新聊一次</button>`;}
+  return renderChat(motDraft,MOT_SCRIPT);}
+function buildMotSummary(){const a=motDraft.answers;return `我參加是因為${a.why||'對這個主題有興趣'}${a.why2?'，'+a.why2:''}。最期待學到${a.want||'新東西'}。${a.curious?'我心裡最好奇的是：'+a.curious+'。':''}`;}
+async function saveMotChat(){try{await apiPost('saveMotivation',authp({mode:'chat',rawAnswers:{answers:motDraft.answers},summaryText:buildMotSummary()}));motDraft=null;toast('學習動機已儲存');go('home');}catch(e){toast(e.message,true);}}
+async function saveMotSelect(){const why=motDraft.q1.length?motDraft.q1.join('、'):'對這個主題有興趣',want=motDraft.q2.length?motDraft.q2.join('、'):'新的知識',exp=motDraft.q3?`之前${motDraft.q3}接觸過。`:'',goal=motDraft.q4?`希望能${motDraft.q4}。`:'';
+  try{await apiPost('saveMotivation',authp({mode:'select',rawAnswers:{q1:motDraft.q1,q2:motDraft.q2,q3:motDraft.q3,q4:motDraft.q4},summaryText:`我參加是因為${why}。最想學會${want}。${exp}${goal}`}));motDraft=null;toast('學習動機已儲存');go('home');}catch(e){toast(e.message,true);}}
+
+/* ============================ 4) 課後心得 ============================ */
+let reflDraft=null,reflCourseId=null,reflJourney=null;
+async function renderReflection(){
+  loadingScreen();
+  reflJourney=await loadJourney();
+  const courses=reflJourney.courses;
+  if(!reflCourseId){
+    const today=todayStr();let t=courses.filter(c=>c.courseDate===today);
+    if(!t.length){const past=courses.filter(c=>c.courseDate<=today);t=past.length?[past[past.length-1]]:[courses[0]];}
+    reflCourseId=t.length?t.sort((a,b)=>b.period-a.period)[0].courseId:courses[0].courseId;
+  }
+  const ex=reflJourney.reflection.find(r=>r.courseId===reflCourseId);
+  const cur=courses.find(c=>c.courseId===reflCourseId);
+  if(!reflDraft){
+    const raw=ex?safeParse(ex.rawAnswers):null;
+    reflDraft=ex?{mode:ex.mode,a1:(raw&&raw.a1)||'',a2:(raw&&raw.a2)||'',a3:(raw&&raw.a3)||'',topic:(raw&&raw.topic)||'',role:(raw&&raw.role)||[],chal:(raw&&raw.chal)||'',improve:(raw&&raw.improve)||'',difficulty:ex.difficulty||0,_step:99,answers:(raw&&raw.answers)||{},_star:ex.difficulty||0}:{mode:'select',a1:'',a2:'',a3:'',topic:'',role:[],chal:'',improve:'',difficulty:0,_step:0,answers:{},_star:0};
+  }
+  const mode=reflDraft.mode||'select', hack=cur.type==='hackathon';
+  const days=[...new Set(courses.map(c=>c.day))];
+  app.innerHTML=topbar()+`<div class="page"><div class="card">
+    ${sectionHead('reflection','')}
+    <label class="fld">選擇課程</label>
+    <select class="input" onchange="reflCourseId=this.value;reflDraft=null;render()">
+      ${days.map(d=>{const ds=courses.filter(c=>c.day===d);return `<optgroup label="Day ${d}（${fmtMD(ds[0].courseDate)}）">${ds.map(c=>`<option value="${c.courseId}" ${c.courseId===reflCourseId?'selected':''}>第${c.period}堂・${esc(c.courseName)}${c.type==='hackathon'?'（黑客松）':''}</option>`).join('')}</optgroup>`}).join('')}
+    </select>
+    <div class="hint">${icon('user')}${esc(cur.teacher)}　·　${hack?'黑客松・團隊成果':(ex?'已填過，可修改':'預設今日課程')}</div>
+    <div class="modeswitch" style="margin-top:16px">
+      <button class="${mode==='select'?'on':''}" onclick="reflDraft.mode='select';render()">${icon('zap')}快速選填</button>
+      <button class="${mode==='chat'?'on':''}" onclick="reflDraft.mode='chat';reflDraft._step=reflDraft._step===99?0:reflDraft._step;render()">${icon('chat')}對話引導</button>
+    </div>
+    ${mode==='select'?(hack?reflSelectHack():reflSelect()):(hack?reflChatHack(cur):reflChat(cur))}
+  </div></div>`;
+}
+function reflSelect(){const chips=['認識新觀念','動手做實作','聽老師講案例','分組討論'];
+  return `<label class="fld"><span class="q">1</span>這堂課在做什麼？</label>
+    <div class="chips">${chips.map(c=>`<span class="chip" onclick="reflDraft.a1='${c}';render()">${c}</span>`).join('')}</div>
+    <textarea class="input" style="margin-top:10px" oninput="reflDraft.a1=this.value" placeholder="用一句話說說看">${esc(reflDraft.a1)}</textarea>
+    <label class="fld"><span class="q">2</span>你學到最有感的一點是什麼？</label>
+    <textarea class="input" oninput="reflDraft.a2=this.value" placeholder="哪個地方讓你「喔～原來如此」？">${esc(reflDraft.a2)}</textarea>
+    <label class="fld"><span class="q">3</span>有沒有卡關的地方？</label>
+    <textarea class="input" id="a3" oninput="reflDraft.a3=this.value" placeholder="留空也可以">${esc(reflDraft.a3)}</textarea>
+    <button class="btn line sm" style="width:100%;margin-top:10px" onclick="reflToChallenge()">${icon('puzzle')}把卡關同步寫成挑戰紀錄</button>
+    <label class="fld"><span class="q">4</span>給這堂課打幾分？</label>
+    <div class="stars">${[1,2,3,4,5].map(n=>`<span class="st ${reflDraft.difficulty>=n?'on':''}" onclick="reflDraft.difficulty=${n};render()">${iconFill('star')}</span>`).join('')}</div>
+    <button class="btn" style="margin-top:20px" onclick="saveReflSelect()">儲存心得</button>`;}
+function reflChat(cur){
+  const SCRIPT=[
+    {id:'impress',bot:[`我們聊聊剛才的《${cur.courseName}》吧～`,'這堂課裡，最讓你有印象的是什麼？'],placeholder:'最有印象的一點～'},
+    {id:'why',bot:a=>[`為什麼「${a.impress}」這個讓你最有印象呢？`],placeholder:'說說你的想法～',optional:true},
+    {id:'stuck',bot:['上課過程中，有沒有哪裡卡住、或心裡冒出什麼問題、好奇？'],chips:['某個地方沒聽懂','想知道更多應用','程式跑不出來'],placeholder:'寫下卡關或疑問（可留空）',optional:true},
+    {id:'toChal',bot:['要不要把這個問題記進你的「挑戰紀錄」，之後把它解開？'],type:'confirm',when:a=>a.stuck&&a.stuck.trim(),action:a=>{apiPost('addChallenge',authp({courseId:reflCourseId,problem:a.stuck.trim(),solution:'',status:'open'})).then(()=>toast('已記入挑戰'));}},
+    {id:'score',bot:['最後，幫這堂課打個分數吧！'],type:'stars'},
+  ];
+  CHAT={draft:reflDraft,script:SCRIPT};
+  if((reflDraft._step||0)>=SCRIPT.length){const sum=buildReflSummary(cur);
+    return renderChat(reflDraft,SCRIPT)+`<div class="summary-card" style="margin-top:14px"><div class="tag">${icon('spark')}你的學習心得</div>${esc(sum)}</div>
+      <button class="btn" onclick="saveReflChat('${cur.courseId}')">確認送出</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="reflDraft._step=0;reflDraft.answers={};reflDraft._star=0;render()">重新聊一次</button>`;}
+  return renderChat(reflDraft,SCRIPT);}
+function buildReflSummary(cur){const a=reflDraft.answers;return `【${cur.courseName}】最有印象的是${a.impress||''}${a.why?'，'+a.why:''}。${a.stuck?'我遇到的卡關／疑問：'+a.stuck+'。':''}`;}
+async function reflToChallenge(){const v=(document.getElementById('a3')||{}).value||reflDraft.a3;if(!v||!v.trim()){toast('先在③寫下卡關內容',true);return;}
+  try{await apiPost('addChallenge',authp({courseId:reflCourseId,problem:v.trim(),solution:'',status:'open'}));toast('已同步到挑戰紀錄');}catch(e){toast(e.message,true);}}
+async function saveReflSelect(){if(!reflDraft.a2||!reflDraft.a2.trim()){toast('②至少寫一點點感想喔',true);return;}
+  const cur=reflJourney.courses.find(x=>x.courseId===reflCourseId);
+  try{await apiPost('saveReflection',authp({courseId:reflCourseId,mode:'select',rawAnswers:{a1:reflDraft.a1,a2:reflDraft.a2,a3:reflDraft.a3},summaryText:`【${cur.courseName}】${reflDraft.a1?reflDraft.a1+'。':''}最有感：${reflDraft.a2}。${reflDraft.a3?'卡關：'+reflDraft.a3+'。':''}`,difficulty:reflDraft.difficulty}));reflDraft=null;toast('課後心得已儲存');render();}catch(e){toast(e.message,true);}}
+async function saveReflChat(courseId){const cur=reflJourney.courses.find(x=>x.courseId===courseId);
+  try{await apiPost('saveReflection',authp({courseId:courseId,mode:'chat',rawAnswers:{answers:reflDraft.answers},summaryText:buildReflSummary(cur),difficulty:reflDraft.answers.score||reflDraft._star||0}));reflDraft=null;toast('課後心得已儲存');render();}catch(e){toast(e.message,true);}}
+/* 黑客松專屬 */
+function reflRole(o){const s=new Set(reflDraft.role);s.has(o)?s.delete(o):s.add(o);reflDraft.role=[...s];render();}
+function reflSelectHack(){const roles=['想點子','寫程式','資料處理','做簡報','上台報告','協調分工'];
+  return `<label class="fld"><span class="q">1</span>你們這組想解決的問題 / 做的主題是什麼？</label>
+    <textarea class="input" oninput="reflDraft.topic=this.value" placeholder="一句話說明你們這組的題目">${esc(reflDraft.topic)}</textarea>
+    <label class="fld"><span class="q">2</span>你在組裡主要負責什麼？（可複選）</label>
+    <div class="opts">${roles.map(o=>`<button class="opt ${reflDraft.role.includes(o)?'on':''}" onclick="reflRole('${o}')">${reflDraft.role.includes(o)?icon('check'):''}${o}</button>`).join('')}</div>
+    <label class="fld"><span class="q">3</span>過程中最大的挑戰是什麼？你們怎麼一起解決的？</label>
+    <textarea class="input" oninput="reflDraft.chal=this.value" placeholder="團隊一起克服的難關">${esc(reflDraft.chal)}</textarea>
+    <label class="fld"><span class="q">4</span>如果再做一次，你會想改進什麼？</label>
+    <textarea class="input" oninput="reflDraft.improve=this.value" placeholder="下次可以更好的地方">${esc(reflDraft.improve)}</textarea>
+    <label class="fld"><span class="q">5</span>幫這次的團隊合作打幾分？</label>
+    <div class="stars">${[1,2,3,4,5].map(n=>`<span class="st ${reflDraft.difficulty>=n?'on':''}" onclick="reflDraft.difficulty=${n};render()">${iconFill('star')}</span>`).join('')}</div>
+    <button class="btn" style="margin-top:20px" onclick="saveReflHackSelect()">儲存黑客松心得</button>`;}
+function reflChatHack(cur){const SCRIPT=[
+    {id:'topic',bot:['黑客松結束了，辛苦你了！','先說說——你們這組想解決的問題、或做的主題是什麼？'],placeholder:'你們這組的題目～'},
+    {id:'role',bot:['很棒！在團隊裡，你主要負責哪一塊呢？'],chips:['想點子','寫程式','資料處理','做簡報','上台報告'],placeholder:'你的角色～'},
+    {id:'chal',bot:['過程中遇到最大的挑戰是什麼？你們是怎麼一起想辦法解決的？'],placeholder:'團隊一起克服的難關～'},
+    {id:'improve',bot:['如果有機會再做一次，你會想改進什麼？'],placeholder:'下次可以更好的地方～',optional:true},
+    {id:'score',bot:['最後，幫這次的「團隊合作」打個分數！'],type:'stars'},
+  ];CHAT={draft:reflDraft,script:SCRIPT};
+  if((reflDraft._step||0)>=SCRIPT.length){const sum=buildReflHackSummary(cur);
+    return renderChat(reflDraft,SCRIPT)+`<div class="summary-card" style="margin-top:14px"><div class="tag">${icon('spark')}你的黑客松心得</div>${esc(sum)}</div>
+      <button class="btn" onclick="saveReflHackChat('${cur.courseId}')">確認送出</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="reflDraft._step=0;reflDraft.answers={};reflDraft._star=0;render()">重新聊一次</button>`;}
+  return renderChat(reflDraft,SCRIPT);}
+function buildReflHackSummary(cur){const a=reflDraft.answers;return `【黑客松・${cur.courseName}】我們這組想解決的是${a.topic||''}。我主要負責${a.role||''}。最大的挑戰是${a.chal||''}${a.improve?'。再做一次，我想改進'+a.improve:''}。`;}
+async function saveReflHackSelect(){const cur=reflJourney.courses.find(x=>x.courseId===reflCourseId);
+  if(!reflDraft.topic||!reflDraft.topic.trim()){toast('先寫一下你們的主題',true);return;}
+  const sum=`【黑客松・${cur.courseName}】我們這組的主題是${reflDraft.topic}。我負責${reflDraft.role.join('、')||'團隊協作'}。最大的挑戰：${reflDraft.chal||'—'}。${reflDraft.improve?'想改進：'+reflDraft.improve+'。':''}`;
+  try{await apiPost('saveReflection',authp({courseId:reflCourseId,mode:'select',rawAnswers:{topic:reflDraft.topic,role:reflDraft.role,chal:reflDraft.chal,improve:reflDraft.improve,hack:true},summaryText:sum,difficulty:reflDraft.difficulty}));reflDraft=null;toast('黑客松心得已儲存');render();}catch(e){toast(e.message,true);}}
+async function saveReflHackChat(courseId){const cur=reflJourney.courses.find(x=>x.courseId===courseId);
+  try{await apiPost('saveReflection',authp({courseId:courseId,mode:'chat',rawAnswers:{answers:reflDraft.answers,hack:true},summaryText:buildReflHackSummary(cur),difficulty:reflDraft.answers.score||reflDraft._star||0}));reflDraft=null;toast('黑客松心得已儲存');render();}catch(e){toast(e.message,true);}}
+
+/* ============================ 5) 挑戰 ============================ */
+async function renderChallenge(){
+  loadingScreen();
+  const j=await loadJourney();
+  const list=j.challenge.slice().reverse(),courses=j.courses;
+  app.innerHTML=topbar()+`<div class="page">
+    <div class="card">${sectionHead('challenge','遇到卡關不可怕，記下來、解開它，就是最棒的學習歷程。')}
+      <label class="fld">這是哪堂課遇到的？（可不選）</label>
+      <select class="input" id="cCourse"><option value="">整體性挑戰</option>${courses.map(c=>`<option value="${c.courseId}">Day${c.day} 第${c.period}堂・${esc(c.courseName)}</option>`).join('')}</select>
+      <label class="fld">遇到的問題</label><textarea class="input" id="cProblem" placeholder="卡在哪裡？"></textarea>
+      <label class="fld">怎麼解決的？（之後補也可以）</label><textarea class="input" id="cSolution" placeholder="留空＝還沒解決"></textarea>
+      <button class="btn" onclick="addChal()">${icon('plus')}新增挑戰</button>
+    </div>
+    <div class="card"><div class="h2"><span class="badge-ic bg-yellow">${icon('puzzle')}</span>我的挑戰・${list.length}</div>
+      <div style="margin-top:14px">${list.length?list.map(c=>chalCard(c,courses)).join(''):'<div class="empty">還沒有挑戰紀錄，去新增第一筆吧！</div>'}</div>
+    </div></div>`;
+}
+function chalCard(c,courses){const co=courses.find(x=>x.courseId===c.courseId);
+  return `<div class="chal"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span class="st ${c.status}">${c.status==='solved'?icon('check')+'已解決':'進行中'}</span><span class="hint" style="margin:0">${co?'Day'+co.day+' 第'+co.period+'堂':'整體'}</span></div>
+    <div style="font-weight:700">${esc(c.problem)}</div>${c.solution?`<div class="hint" style="margin-top:8px">${icon('spark')}${esc(c.solution)}</div>`:''}
+    ${c.status==='open'?`<button class="btn line sm" style="width:100%;margin-top:12px" onclick="solveChal('${c.recordId}')">補上解法 / 標記已解決</button>`:''}</div>`;}
+async function addChal(){const problem=document.getElementById('cProblem').value.trim();if(!problem){toast('先寫下遇到的問題',true);return;}
+  const solution=document.getElementById('cSolution').value.trim();
+  try{await apiPost('addChallenge',authp({courseId:document.getElementById('cCourse').value,problem:problem,solution:solution,status:solution?'solved':'open'}));toast('挑戰已新增');render();}catch(e){toast(e.message,true);}}
+function solveChal(id){showModal(`<div class="mic bg-cyan">${icon('puzzle')}</div><h3>補上解法</h3>
+  <textarea id="solInput" class="input" placeholder="你後來怎麼解開的？"></textarea>
+  <button class="btn" onclick="doSolveChal('${id}')">標記已解決</button>`);}
+async function doSolveChal(id){const v=document.getElementById('solInput').value.trim();
+  try{await apiPost('updateChallenge',authp({recordId:id,solution:v,status:'solved'}));closeModal();toast('挑戰結案');render();}catch(e){toast(e.message,true);}}
+
+/* ============================ 6) 成果上傳 ============================ */
+let outType='slide',outFile=null;
+const TYPE_LABEL={slide:'簡報',work:'作品',award:'獎狀',photo:'照片'},TYPE_ICON={slide:'image',work:'spark',award:'award',photo:'camera'};
+async function renderOutcome(){
+  loadingScreen();
+  const j=await loadJourney();
+  const list=j.outcome.slice().reverse();
+  app.innerHTML=topbar()+`<div class="page">
+    <div class="card">${sectionHead('outcome','把你的簡報、作品、獎狀、照片留下來，組成作品牆。')}
+      <label class="fld">類型</label>
+      <div class="opts">${Object.keys(TYPE_LABEL).map(t=>`<button class="opt single ${outType===t?'on':''}" onclick="outType='${t}';render()">${icon(TYPE_ICON[t])}${TYPE_LABEL[t]}</button>`).join('')}</div>
+      <label class="fld">選擇檔案 / 拍照</label>
+      <input id="file" class="input" type="file" accept="image/png,image/jpeg,application/pdf" capture="environment" onchange="onPickFile(event)" />
+      <div class="hint">${icon('info')}圖片 ≤10MB、PDF ≤20MB（jpg／png／pdf）</div>
+      <div id="preview"></div>
+      <label class="fld">說明文字</label><input id="caption" class="input" placeholder="例如：我做的醫療影像分類成果" />
+      <button class="btn" id="upBtn" onclick="uploadOutcome()">${icon('upload')}上傳</button>
+    </div>
+    <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('award')}</span>我的作品牆・${list.length}</div>
+      ${list.length?`<div class="wall">${list.map(workCard).join('')}</div>`:'<div class="empty">還沒有成果，快上傳第一件！</div>'}</div></div>`;
+}
+function onPickFile(e){const f=e.target.files[0];if(!f)return;const isPdf=f.type==='application/pdf',lim=isPdf?20:10;
+  if(f.size>lim*1024*1024){toast(`檔案太大（上限 ${lim}MB）`,true);e.target.value='';outFile=null;document.getElementById('preview').innerHTML='';return;}
+  const rd=new FileReader();rd.onload=()=>{outFile={name:f.name,mime:f.type,data:rd.result,isPdf};
+    document.getElementById('preview').innerHTML=isPdf?`<div style="margin-top:12px;background:var(--cyan-soft);border-radius:14px;padding:20px;text-align:center;color:var(--cyan-deep);font-weight:700">${icon('file')} ${esc(f.name)}</div>`:`<img src="${rd.result}" style="margin-top:12px;width:100%;border-radius:14px" />`;};
+  rd.readAsDataURL(f);}
+async function uploadOutcome(){if(!outFile){toast('先選一個檔案',true);return;}
+  const btn=document.getElementById('upBtn');btn.disabled=true;btn.innerHTML='上傳中…';
+  try{await apiPost('saveOutcome',authp({type:outType,fileBase64:outFile.data,fileName:outFile.name,mimeType:outFile.mime,caption:document.getElementById('caption').value.trim()}));outFile=null;toast('成果已上傳');render();}
+  catch(e){toast(e.message,true);btn.disabled=false;btn.innerHTML='上傳';}}
+// Drive 縮圖（圖片/PDF 皆可）；載入失敗退回檔案圖示
+function workThumb(o){const t=`https://drive.google.com/thumbnail?id=${esc(o.driveFileId)}&sz=w600`;
+  return `<a href="${o.driveUrl}" target="_blank" rel="noopener" style="text-decoration:none"><img class="thumb" src="${t}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="file" style="display:none">${icon('file')}</div></a>`;}
+function workCard(o){return `<div class="work"><span class="tag">${icon(TYPE_ICON[o.type])}${TYPE_LABEL[o.type]}</span>${workThumb(o)}<div class="cap">${esc(o.caption||'')}</div></div>`;}
+
+/* ============================ 7) 結業反思 ============================ */
+let finDraft=null;
+async function renderFinal(){
+  loadingScreen();
+  const j=await loadJourney();
+  const mot=j.motivation,ex=j.final;
+  if(!finDraft){const raw=ex?safeParse(ex.rawAnswers):null;
+    finDraft=ex?{mode:ex.mode,f1:(raw&&raw.f1)||'',f2:(raw&&raw.f2)||'',f3:(raw&&raw.f3)||'',_step:99,answers:(raw&&raw.answers)||{}}:{mode:'select',f1:'',f2:'',f3:'',_step:0,answers:{}};}
+  const mode=finDraft.mode||'select';
+  app.innerHTML=topbar()+`<div class="page"><div class="card">
+    ${sectionHead('final','營隊的最後，回頭看看自己走了多遠。')}
+    <div class="modeswitch" style="margin-top:16px">
+      <button class="${mode==='select'?'on':''}" onclick="finDraft.mode='select';render()">${icon('zap')}快速選填</button>
+      <button class="${mode==='chat'?'on':''}" onclick="finDraft.mode='chat';finDraft._step=finDraft._step===99?0:finDraft._step;render()">${icon('chat')}對話引導</button>
+    </div>
+    ${mode==='select'?finSelect(mot):finChat(mot)}
+  </div></div>`;
+}
+function finSelect(mot){return `<label class="fld"><span class="q">1</span>這次營隊整體最大的收穫是什麼？</label>
+  <textarea class="input" oninput="finDraft.f1=this.value" placeholder="最難忘 / 最有收穫的一件事">${esc(finDraft.f1)}</textarea>
+  <label class="fld"><span class="q">2</span>跟你一開始的動機比，有達成嗎？</label>
+  ${mot?`<div class="summary-card" style="background:var(--yellow-soft);border-color:#f0dcad"><div class="tag" style="color:#9a6a13">${icon('target')}你當初寫</div>${esc(mot.summaryText)}</div>`:''}
+  <textarea class="input" style="margin-top:10px" oninput="finDraft.f2=this.value" placeholder="有沒有達成？哪裡超出預期？">${esc(finDraft.f2)}</textarea>
+  <label class="fld"><span class="q">3</span>接下來你想繼續學／做什麼？</label>
+  <textarea class="input" oninput="finDraft.f3=this.value" placeholder="下一步的小目標">${esc(finDraft.f3)}</textarea>
+  <button class="btn" style="margin-top:18px" onclick="saveFinSelect()">完成結業反思</button>`;}
+function finChat(mot){const SCRIPT=[
+    {id:'gain',bot:['營隊到尾聲了，辛苦你了！','這幾天，你覺得自己最大的收穫是什麼？'],chips:['學會一個新技能','做出自己的作品','認識新朋友'],placeholder:'最大的收穫～'},
+    {id:'meet',bot:mot?[`還記得你一開始說：「${mot.summaryText}」`,'跟當初的期待比，達成了嗎？有沒有哪裡超乎想像？']:['跟你來之前的期待比，達成了嗎？'],placeholder:'回頭看看～',optional:true},
+    {id:'next',bot:['接下來，你最想繼續探索、或做出什麼？'],chips:['繼續學 AI','做一個完整專題','參加競賽'],placeholder:'下一步～'},
+    {id:'openq',bot:['有沒有一個你還沒解開、想繼續研究的問題？'],placeholder:'你還想搞懂的事（可留空）',optional:true},
+  ];CHAT={draft:finDraft,script:SCRIPT};
+  if((finDraft._step||0)>=SCRIPT.length){const sum=buildFinSummary();
+    return renderChat(finDraft,SCRIPT)+`<div class="summary-card" style="margin-top:14px"><div class="tag">${icon('spark')}你的結業反思</div>${esc(sum)}</div>
+      <button class="btn" onclick="saveFinChat()">確認送出</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="finDraft._step=0;finDraft.answers={};render()">重新聊一次</button>`;}
+  return renderChat(finDraft,SCRIPT);}
+function buildFinSummary(){const a=finDraft.answers;return `這次營隊最大的收穫是${a.gain||''}。${a.meet?'回顧當初的期待，'+a.meet+'。':''}${a.next?'接下來我想'+a.next+'。':''}${a.openq?'還想繼續研究：'+a.openq+'。':''}`;}
+async function saveFinSelect(){if(!finDraft.f1||!finDraft.f1.trim()){toast('①寫一點收穫吧',true);return;}
+  try{await apiPost('saveFinal',authp({mode:'select',rawAnswers:{f1:finDraft.f1,f2:finDraft.f2,f3:finDraft.f3},summaryText:`這次營隊最大的收穫是${finDraft.f1}。${finDraft.f2?'回顧當初的動機，'+finDraft.f2+'。':''}${finDraft.f3?'接下來我想'+finDraft.f3+'。':''}`}));finDraft=null;toast('結業反思完成');go('journey');}catch(e){toast(e.message,true);}}
+async function saveFinChat(){try{await apiPost('saveFinal',authp({mode:'chat',rawAnswers:{answers:finDraft.answers},summaryText:buildFinSummary()}));finDraft=null;toast('結業反思完成');go('journey');}catch(e){toast(e.message,true);}}
+
+/* ============================ 8) 我的歷程 ============================ */
+async function renderJourney(){
+  loadingScreen();
+  const j=await loadJourney();
+  const cm={};j.courses.forEach(c=>cm[c.courseId]=c);
+  const refl=j.reflection.slice().sort((a,b)=>{const x=cm[a.courseId]||{},y=cm[b.courseId]||{};return (x.day-y.day)||(x.period-y.period)});
+  const ji=(key)=>`<span class="ji ${SECTION[key].bg}">${icon(SECTION[key].ic)}</span>`;
+  app.innerHTML=topbar()+`<div class="page"><div class="card" id="journeyDoc">
+    <div class="jcover">
+      <div class="h1" style="margin:0">${esc(j.student.name)} 的學習歷程</div>
+      <p class="sub">${esc(j.camp.campName)}・${esc(j.camp.batch)}　|　${esc(j.camp.startDate)} ~ ${esc(j.camp.endDate)}</p></div>
+    <div class="jrow"><div class="lab">${ji('motivation')}學習動機</div>${j.motivation?`<div>${esc(j.motivation.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>
+    <div class="jrow"><div class="lab">${ji('reflection')}各堂心得・${refl.length}/${j.courses.length}</div>
+      ${refl.length?refl.map(r=>{const c=cm[r.courseId]||{};return `<div style="margin-bottom:14px"><div><span class="tag-day">Day${c.day} 第${c.period}堂</span><b>${esc(c.courseName)}</b> <span style="color:var(--yellow)">${'★'.repeat(r.difficulty||0)}</span></div><div class="hint" style="margin-top:5px">${esc(r.summaryText)}</div></div>`}).join(''):'<div class="empty">尚未填寫</div>'}</div>
+    <div class="jrow"><div class="lab">${ji('challenge')}挑戰歷程・${j.challenge.length}</div>
+      ${j.challenge.length?j.challenge.map(c=>`<div style="margin-bottom:11px"><b>${c.status==='solved'?icon('check'):icon('puzzle')} ${esc(c.problem)}</b>${c.solution?`<div class="hint" style="margin-top:4px">${icon('spark')}${esc(c.solution)}</div>`:''}</div>`).join(''):'<div class="empty">尚未紀錄</div>'}</div>
+    <div class="jrow"><div class="lab">${ji('outcome')}成果作品牆・${j.outcome.length}</div>
+      ${j.outcome.length?`<div class="wall">${j.outcome.map(workCard).join('')}</div>`:'<div class="empty">尚未上傳</div>'}</div>
+    <div class="jrow"><div class="lab">${ji('final')}結業反思</div>${j.final?`<div>${esc(j.final.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>
+  </div>
+  <button class="btn noprint" onclick="window.print()">${icon('book')}下載 / 列印 PDF</button>
+  <button class="btn line noprint" style="margin-top:10px" onclick="confirmSendParent()">${icon('mail')}把學習歷程寄給家長</button>
+  <p class="sub noprint" style="text-align:center">手機請選「儲存成 PDF」。家長會收到一封整理好的學習歷程信。</p>
+  </div>`;
+}
+function confirmSendParent(){showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>寄給家長</h3>
+  <p class="sub">要把你目前的學習歷程整理成一封信，寄給家長嗎？之後有更新可以再寄一次。</p>
+  <div class="row" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">先不要</button><button class="btn" id="spBtn" onclick="doSendParent()">寄出</button></div>`);}
+async function doSendParent(){const b=document.getElementById('spBtn');if(b){b.disabled=true;b.textContent='寄送中…';}
+  try{const r=await apiPost('sendToParent', authp());
+    showModal(`<div class="mic bg-cyan">${icon('check')}</div><h3>已寄出</h3>
+      <p class="sub">已把你的學習歷程寄到家長信箱囉！${r.dryRun?'<br><span style="color:var(--pink)">（測試模式：目前尚未真正寄出，僅記錄）</span>':''}</p>
+      <button class="btn" onclick="closeModal()">好</button>`);
+  }catch(e){closeModal();toast(e.message,true);}}
+
+/* ============================ TA 後台（#/admin） ============================ */
+let ADMIN=JSON.parse(sessionStorage.getItem('ai4kids_lj_admin')||'null'); // {passcode,campId,batch,campName}
+async function renderAdmin(){
+  if(ADMIN){ loadingScreen(); try{ const d=await apiGet('adminOverview',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch}); renderAdminTable(d); }catch(e){ adminLogout(e.message); } return; }
+  await renderAdminLogin();
+}
+async function renderAdminLogin(err){
+  const camps=await apiGet('getCamps');
+  app.innerHTML=`<div class="page"><div class="card" style="margin-top:30px">
+    <img src="${LOGO}" style="height:30px;margin-bottom:14px" />
+    <div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>TA 後台</div>
+    <label class="fld">通關碼</label><input id="apass" class="input" type="password" placeholder="輸入 TA 通關碼" />
+    <label class="fld">營隊梯次</label>
+    <select id="acamp" class="input">${camps.map(c=>`<option value="${c.campId}|${c.batch}|${esc(c.campName)}">${esc(c.campName)}（${esc(c.batch)}）</option>`).join('')}</select>
+    <div class="warn" id="aWarn">${err?icon('info')+esc(err):''}</div>
+    <button class="btn" id="aBtn" style="margin-top:8px" onclick="adminLogin()">進入後台</button>
+  </div></div>`;
+}
+async function adminLogin(){
+  const passcode=document.getElementById('apass').value.trim();
+  const [campId,batch,campName]=document.getElementById('acamp').value.split('|');
+  const b=document.getElementById('aBtn'); if(b){b.disabled=true;b.textContent='驗證中…';}
+  try{ const d=await apiGet('adminOverview',{passcode:passcode,campId:campId,batch:batch});
+    ADMIN={passcode:passcode,campId:campId,batch:batch,campName:campName}; sessionStorage.setItem('ai4kids_lj_admin',JSON.stringify(ADMIN));
+    renderAdminTable(d);
+  }catch(e){ if(b){b.disabled=false;b.textContent='進入後台';} document.getElementById('aWarn').innerHTML=icon('info')+esc(e.message); }
+}
+function adminLogout(err){ ADMIN=null; sessionStorage.removeItem('ai4kids_lj_admin'); renderAdminLogin(err); }
+function renderAdminTable(d){
+  const avg=d.students.length?Math.round(d.students.reduce((a,s)=>a+s.pct,0)/d.students.length):0;
+  const rows=d.students.slice().sort((a,b)=>a.pct-b.pct).map(s=>`
+    <div class="chal" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="font-size:15px">${esc(s.name)}</b>
+        <span class="id-chip" style="font-size:12px">PIN ${esc(s.pin)}</span>
+      </div>
+      <div class="prog-top" style="margin-top:8px"><div class="pct" style="font-size:22px">${s.pct}<small>%</small></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>
+      <div class="hint" style="margin-top:7px">心得 ${s.reflCount}/${s.totalCourses}・挑戰 ${s.challenge}・成果 ${s.outcome}・家長 ${esc(s.parentEmail||'—')}</div>
+    </div>`).join('');
+  app.innerHTML=`<div class="page">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div class="eyebrow">${icon('spark')}TA 後台</div><div class="h2" style="margin-top:6px">完成率總覽</div></div>
+        <button class="switch-btn" onclick="adminLogout()">${icon('switch')}登出</button>
+      </div>
+      <p class="sub">${esc(ADMIN.campName)}・${esc(d.batch)}　|　${d.total} 位學員，平均完成 ${avg}%</p>
+      <button class="btn line" style="margin-top:10px" onclick="adminBatchSend()">${icon('mail')}結業批次寄家長</button>
+    </div>
+    <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員（${d.total}）</div>
+      <div style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
+    </div>
+  </div>`;
+}
+async function adminBatchSend(){
+  showModal(`<div class="loading" style="padding:30px 0"><div class="spinner"></div><div>處理中…</div></div>`);
+  try{ const r=await apiPost('adminSendParents',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch});
+    closeModal();
+    const list=r.sent.map(x=>`<div>• ${esc(x.name)} → ${esc(x.parentEmail)}</div>`).join('')||'<div class="empty">沒有可寄送的對象</div>';
+    const skip=r.skipped.length?`<div class="hint" style="margin-top:10px">略過 ${r.skipped.length} 位：${r.skipped.map(x=>esc(x.name)+'（'+esc(x.reason)+'）').join('、')}</div>`:'';
+    showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>${r.dryRun?'試算結果（尚未真寄）':'已寄送'}</h3>
+      <p class="sub">${r.dryRun?'目前為測試模式，以下是<b>將會</b>寄送的名單，共 '+r.sentCount+' 位：':'已寄出給 '+r.sentCount+' 位家長：'}</p>
+      <div style="max-height:240px;overflow:auto;font-size:14px;margin:10px 0;line-height:1.9">${list}</div>${skip}
+      <button class="btn" onclick="closeModal()">好</button>`);
+  }catch(e){ closeModal(); toast(e.message,true); }
+}
+
+/* ----------------------------- 啟動 ----------------------------- */
+if(!location.hash)location.hash=ME?'#/home':'#/login';
+render();
+</script>
+</body>
+</html>
