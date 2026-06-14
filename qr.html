@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI4Kids 學習歷程 — 登入 QR</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--cyan:#02bdc7;--yellow:#e8ba51;--pink:#FC4067;--dark:#0A1A2E;--ink2:#5c6773}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Noto Sans TC',sans-serif;background:#f4f6f8;color:var(--dark);
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px}
+  .poster{background:#fff;border-radius:28px;box-shadow:0 16px 44px rgba(16,38,59,.12);
+    padding:48px 44px;text-align:center;max-width:460px;width:100%;border:1px solid #e8edf1}
+  .logo{height:46px;margin-bottom:6px}
+  h1{font-size:26px;font-weight:900;margin:14px 0 2px;letter-spacing:-.3px}
+  .sub{color:var(--ink2);font-size:15px;margin:0 0 26px}
+  #qr{display:inline-block;padding:18px;background:#fff;border:3px solid var(--cyan);border-radius:20px}
+  #qr img,#qr canvas{display:block}
+  .scan{margin-top:24px;font-size:19px;font-weight:900;color:var(--cyan)}
+  .steps{margin:18px auto 0;text-align:left;max-width:300px;color:#16263b;font-size:14.5px;line-height:1.9}
+  .steps b{color:var(--pink)}
+  .url{margin-top:22px;font-size:13px;color:var(--ink2);word-break:break-all}
+  .url a{color:var(--cyan);text-decoration:none}
+  @media print{body{background:#fff;padding:0}.poster{box-shadow:none;border:0}}
+</style>
+</head>
+<body>
+  <div class="poster">
+    <img class="logo" src="assets/ai4kids-logo.png" alt="AI4Kids" />
+    <h1>學習歷程系統</h1>
+    <p class="sub">記錄你在營隊的每一步成長</p>
+    <div id="qr"></div>
+    <div class="scan">用手機掃我，開始記錄！</div>
+    <div class="steps">
+      <div>1. 掃描上方 QR Code</div>
+      <div>2. 輸入<b>學員編號</b>（助教提供）</div>
+      <div>3. 確認身分、設定<b>存取碼</b></div>
+      <div>4. 開始記錄你的學習歷程 ✨</div>
+    </div>
+    <div class="url">網址：<a href="https://ai4kids-tw.github.io/learning-journey/">ai4kids-tw.github.io/learning-journey</a></div>
+  </div>
+  <script>
+    new QRCode(document.getElementById('qr'), {
+      text: 'https://ai4kids-tw.github.io/learning-journey/',
+      width: 240, height: 240,
+      colorDark: '#0A1A2E', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  </script>
+</body>
+</html>
