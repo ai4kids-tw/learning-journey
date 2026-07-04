@@ -339,7 +339,7 @@ async function startLogin(){
     showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>確認身分</h3>
       <p class="sub">請確認以下資料是你本人：</p>
       <div class="code-box" style="margin:14px 0;text-align:left">
-        <div style="font-size:18px;font-weight:800;color:var(--cyan-deep)">${esc(r.name)}</div>
+        <div style="font-size:18px;font-weight:800;color:var(--cyan-deep)">${esc(r.name||'（此編號尚未登記姓名）')}</div>
         <div style="font-size:13px;color:var(--ink2);margin-top:4px">${esc(r.campName)}・${esc(r.batch)}</div></div>
       <div class="row"><button class="btn ghost" onclick="closeModal()">不是我</button><button class="btn" onclick="afterConfirm()">是我，繼續</button></div>`);
   }catch(e){toast(e.message,true);if(sbtn){sbtn.disabled=false;sbtn.innerHTML='開始 '+icon('arrow');}}
@@ -368,14 +368,18 @@ async function forgotPin(){
       <button class="btn" onclick="closeModal();askPin()">回去輸入</button>`);
   }catch(e){ showModal(`<div class="mic bg-pink">${icon('info')}</div><h3>無法自動補發</h3><p class="sub">${esc(e.message)}</p><button class="btn" onclick="closeModal();askPin()">好</button>`); }
 }
-function askProfile(){showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>第一次來，建立你的歷程</h3>
-  <p class="sub">你是 <b>${esc(LOOKUP.name)}</b>（${esc(LOOKUP.campName)}）。</p>
+function askProfile(){const needName=!LOOKUP.name;
+  showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>第一次來，建立你的歷程</h3>
+  <p class="sub">${needName?'這個編號還沒登記姓名，請填一下你的姓名：':'你是 <b>'+esc(LOOKUP.name)+'</b>（'+esc(LOOKUP.campName)+'）。'}</p>
+  ${needName?'<label class="fld">你的姓名</label><input id="pName" class="input" placeholder="請輸入你的姓名" />':''}
   <label class="fld">你的 Email（選填，方便自己找回存取碼）</label>
   <input id="pEmail" class="input" type="email" inputmode="email" placeholder="沒有也沒關係，可留空" />
   <button class="btn" id="regBtn" style="margin-top:18px" onclick="doRegister()">建立我的歷程</button>`);}
 async function doRegister(){const email=document.getElementById('pEmail').value.trim();
+  const nameEl=document.getElementById('pName'); const name=nameEl?nameEl.value.trim():'';
+  if(!LOOKUP.name && !name){ toast('請填寫你的姓名',true); return; }
   const rbtn=document.getElementById('regBtn'); if(rbtn){rbtn.disabled=true;rbtn.textContent='建立中…';}
-  try{ const r=await apiPost('register',{studentId:LOOKUP.studentId,email:email});
+  try{ const r=await apiPost('register',{studentId:LOOKUP.studentId,email:email,name:name});
     setMe({studentId:LOOKUP.studentId,pin:r.pin,campId:r.campId,batch:r.batch,name:r.name});invalidateJourney();
     showModal(`<div class="mic bg-cyan">${icon('spark')}</div><h3>歡迎你，${esc(r.name)}！</h3>
       <p class="sub">建檔完成。這是你的存取碼，<b>下次登入要用</b>（換裝置也用得到）。</p>
