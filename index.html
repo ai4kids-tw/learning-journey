@@ -176,20 +176,35 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
 const API_URL = 'https://script.google.com/macros/s/AKfycbwDkqs06qVhzWhwc0rL6ModIjy5MeEM50CS0f4p5nph_VT2ingrrnP9VT6_bpbWGqoEfQ/exec';
 
 /* ----------------------------- API 層 ----------------------------- */
-async function apiGet(action, params){
-  const qs = new URLSearchParams(Object.assign({action:action}, params||{})).toString();
-  const r = await fetch(API_URL + '?' + qs);
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || '讀取失敗');
-  return j.data;
+// 可安全重試的 POST（冪等）；append 類（addChallenge/saveOutcome）與 register 不重試，避免重複
+const IDEMPOTENT_POST=new Set(['login','saveMotivation','saveReflection','saveFinal','updateChallenge','sendToParent','adminSendParents']);
+// 視為「暫時性忙碌」的錯誤 → 退避後重試
+const TRANSIENT=/同時呼叫|concurrent|too many|逾時|timeout|忙碌|Lock|invoked too many/i;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+async function apiCall(method, action, params){
+  const retryable = (method==='GET') || IDEMPOTENT_POST.has(action);
+  const max = retryable ? 4 : 1;
+  let lastErr;
+  for(let i=0;i<max;i++){
+    try{
+      let r;
+      if(method==='GET'){ const qs=new URLSearchParams(Object.assign({action:action}, params||{})).toString(); r=await fetch(API_URL+'?'+qs); }
+      else{ r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action}, params||{}))}); }
+      const txt=await r.text();
+      let j; try{ j=JSON.parse(txt); }catch(pe){ throw {transient:true, message:'伺服器忙碌'}; }
+      if(!j.ok){ if(TRANSIENT.test(j.error||'')) throw {transient:true, message:j.error}; throw Object.assign(new Error(j.error||'發生錯誤'),{business:true}); }
+      if(method!=='GET' && /^(save|add|update)/.test(action)) invalidateJourney();
+      return j.data;
+    }catch(e){
+      if(e && e.business) throw e;
+      lastErr=e;
+      if(i<max-1) await sleep(500*Math.pow(2,i)*(0.7+Math.random()*0.6)); // 0.5→1→2s + 抖動
+    }
+  }
+  throw new Error((lastErr && lastErr.message) || '連線忙碌，請稍後再試');
 }
-async function apiPost(action, body){
-  const r = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action:action}, body||{})) });
-  const j = await r.json();
-  if(!j.ok) throw new Error(j.error || '儲存失敗');
-  if(/^(save|add|update)/.test(action)) invalidateJourney();
-  return j.data;
-}
+async function apiGet(action, params){ return apiCall('GET', action, params); }
+async function apiPost(action, params){ return apiCall('POST', action, params); }
 function authp(extra){ return Object.assign({ studentId:ME.studentId, pin:ME.pin, campId:ME.campId, batch:ME.batch }, extra||{}); }
 // 學習歷程前端快取（換頁不重抓；寫入後失效）
 let JCACHE=null;
@@ -329,11 +344,10 @@ async function startLogin(){
       <div class="row"><button class="btn ghost" onclick="closeModal()">不是我</button><button class="btn" onclick="afterConfirm()">是我，繼續</button></div>`);
   }catch(e){toast(e.message,true);if(sbtn){sbtn.disabled=false;sbtn.innerHTML='開始 '+icon('arrow');}}
 }
-async function afterConfirm(){
+function afterConfirm(){
   closeModal();
-  try{ const r=await apiGet('studentExists',{studentId:LOOKUP.studentId});
-    if(r.exists) askPin(); else askProfile();
-  }catch(e){toast(e.message,true);}
+  // lookup 已回傳 registered，不再多打一次 studentExists（省一次讀表）
+  if(LOOKUP.registered) askPin(); else askProfile();
 }
 function askPin(){showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>請輸入存取碼</h3>
   <p class="sub">歡迎回來，${esc(LOOKUP.name)}！輸入你的 4 碼存取碼登入。</p>
