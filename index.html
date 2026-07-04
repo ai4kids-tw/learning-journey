@@ -311,6 +311,8 @@ function computeProgress(j){const total=j.courses.length,refl=j.reflection.lengt
 
 /* ============================ 1) 登入 ============================ */
 let LOOKUP=null; // 暫存名冊查詢結果
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TYPO={'gmail.con':'gmail.com','gmail.cm':'gmail.com','gmai.com':'gmail.com','gmial.com':'gmail.com','hotmial.com':'hotmail.com','hotmai.com':'hotmail.com','yahooo.com':'yahoo.com','yaho.com':'yahoo.com','outlok.com':'outlook.com','icloud.con':'icloud.com'};
 async function renderLogin(){
   app.innerHTML=`<div class="page">
     <div class="card" style="text-align:center; padding-top:30px">
@@ -372,12 +374,20 @@ function askProfile(){const needName=!LOOKUP.name;
   showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>第一次來，建立你的歷程</h3>
   <p class="sub">${needName?'這個編號還沒登記姓名，請填一下你的姓名：':'你是 <b>'+esc(LOOKUP.name)+'</b>（'+esc(LOOKUP.campName)+'）。'}</p>
   ${needName?'<label class="fld">你的姓名</label><input id="pName" class="input" placeholder="請輸入你的姓名" />':''}
-  <label class="fld">你的 Email（選填，方便自己找回存取碼）</label>
-  <input id="pEmail" class="input" type="email" inputmode="email" placeholder="沒有也沒關係，可留空" />
-  <button class="btn" id="regBtn" style="margin-top:18px" onclick="doRegister()">建立我的歷程</button>`);}
+  <label class="fld">你的 Email</label>
+  <input id="pEmail" class="input" type="email" inputmode="email" placeholder="用來找回存取碼；沒有可填家長的" oninput="onRegEmail()" />
+  <div class="warn" id="regEmailWarn"></div>
+  <div class="hint">${icon('info')}忘記存取碼時，可用這個 Email 自行補發，不必找助教。</div>
+  <button class="btn" id="regBtn" style="margin-top:14px" onclick="doRegister()">建立我的歷程</button>`);}
+function onRegEmail(){const v=document.getElementById('pEmail').value.trim(),w=document.getElementById('regEmailWarn');
+  if(!v){w.innerHTML='';return;}const dom=(v.split('@')[1]||'').toLowerCase();
+  if(TYPO[dom]){const s=v.split('@')[0]+'@'+TYPO[dom];w.style.color='#c79318';w.innerHTML=`${icon('info')}是不是要打 <b style="cursor:pointer;text-decoration:underline" onclick="document.getElementById('pEmail').value='${s}';onRegEmail()">${s}</b>？`;return;}
+  w.style.color='var(--pink)'; if(!EMAIL_RE.test(v)){w.innerHTML=`${icon('info')}Email 格式怪怪的，再檢查一下`;return;} w.innerHTML='';}
 async function doRegister(){const email=document.getElementById('pEmail').value.trim();
   const nameEl=document.getElementById('pName'); const name=nameEl?nameEl.value.trim():'';
   if(!LOOKUP.name && !name){ toast('請填寫你的姓名',true); return; }
+  if(!EMAIL_RE.test(email)){ onRegEmail(); toast('請填寫正確的 Email',true); return; }
+  if(TYPO[(email.split('@')[1]||'').toLowerCase()]){ toast('Email 網域好像拼錯了',true); return; }
   const rbtn=document.getElementById('regBtn'); if(rbtn){rbtn.disabled=true;rbtn.textContent='建立中…';}
   try{ const r=await apiPost('register',{studentId:LOOKUP.studentId,email:email,name:name});
     setMe({studentId:LOOKUP.studentId,pin:r.pin,campId:r.campId,batch:r.batch,name:r.name});invalidateJourney();
