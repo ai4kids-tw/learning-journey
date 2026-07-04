@@ -779,11 +779,12 @@ function renderAdminTable(d){
   const rows=d.students.slice().sort((a,b)=>a.pct-b.pct).map(s=>`
     <div class="chal" style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <b style="font-size:15px">${esc(s.name)}</b>
+        <div><b style="font-size:15px">${esc(s.name)}</b> <span class="hint" style="margin:0">${esc(s.studentId)}</span></div>
         <span class="id-chip" style="font-size:12px">PIN ${esc(s.pin)}</span>
       </div>
       <div class="prog-top" style="margin-top:8px"><div class="pct" style="font-size:22px">${s.pct}<small>%</small></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>
       <div class="hint" style="margin-top:7px">心得 ${s.reflCount}/${s.totalCourses}・挑戰 ${s.challenge}・成果 ${s.outcome}・家長 ${esc(s.parentEmail||'—')}</div>
+      <button class="btn line sm" style="width:100%;margin-top:10px" onclick="adminReset('${esc(s.studentId)}')">重設 PIN</button>
     </div>`).join('');
   app.innerHTML=`<div class="page">
     <div class="card">
@@ -809,6 +810,15 @@ async function adminBatchSend(){
       <p class="sub">${r.dryRun?'目前為測試模式，以下是<b>將會</b>寄送的名單，共 '+r.sentCount+' 位：':'已寄出給 '+r.sentCount+' 位家長：'}</p>
       <div style="max-height:240px;overflow:auto;font-size:14px;margin:10px 0;line-height:1.9">${list}</div>${skip}
       <button class="btn" onclick="closeModal()">好</button>`);
+  }catch(e){ closeModal(); toast(e.message,true); }
+}
+function adminReset(sid){showModal(`<div class="mic bg-yellow">${icon('user')}</div><h3>重設存取碼</h3>
+  <p class="sub">要重設 <b>${esc(sid)}</b> 的存取碼嗎？舊碼會立即失效，請把新碼告知學生。</p>
+  <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" onclick="doAdminReset('${esc(sid)}')">重設</button></div>`);}
+async function doAdminReset(sid){
+  try{ const r=await apiPost('adminResetPin',{passcode:ADMIN.passcode,studentId:sid});
+    showModal(`<div class="mic bg-cyan">${icon('check')}</div><h3>已重設</h3><p class="sub">${esc(sid)} 的新存取碼：</p>
+      <div class="code-box"><div class="n">${r.pin}</div></div><button class="btn" onclick="closeModal();renderAdmin()">好</button>`);
   }catch(e){ closeModal(); toast(e.message,true); }
 }
 
