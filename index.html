@@ -265,14 +265,16 @@ const LOGO='assets/ai4kids-logo.png';
 
 /* ----------------------------- 路由 ----------------------------- */
 const ROUTES=['login','home','motivation','reflection','challenge','outcome','final','journey','admin'];
-function currentRoute(){const h=location.hash.replace('#/','');return ROUTES.includes(h)?h:(ME?'home':'login');}
+function parseHash(){const h=location.hash.replace(/^#\//,'');const p=h.split('/');return {route:p[0]||'',params:p.slice(1)};}
+function currentRoute(){const r=parseHash().route;if(r==='view')return 'view';return ROUTES.includes(r)?r:(ME?'home':'login');}
 async function render(){
   const r=currentRoute();
-  if(r!=='login'&&r!=='admin'&&!ME){go('login');return;}
+  if(r!=='login'&&r!=='admin'&&r!=='view'&&!ME){go('login');return;}
   window.scrollTo(0,0);
   renderTabbar(r);
   try{
-    await ({login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
+    if(r==='view'){ await renderView(parseHash().params); }
+    else await ({login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
   }catch(e){ renderError(e); }
 }
 window.addEventListener('hashchange', render);
@@ -296,7 +298,7 @@ function topbar(){
       <button class="switch-btn" onclick="confirmSwitch()">${icon('switch')}切換</button>
     </div></div>`;
 }
-function renderTabbar(r){if(!ME||r==='admin'){tabbar.innerHTML='';return;}
+function renderTabbar(r){if(!ME||r==='admin'||r==='view'){tabbar.innerHTML='';return;}
   const tabs=[['home','home','首頁'],['reflection','note','心得'],['outcome','award','成果'],['journey','book','歷程']];
   tabbar.innerHTML=tabs.map(([k,i,t])=>`<button class="${r===k?'on':''}" onclick="go('${k}')">${icon(i)}${t}</button>`).join('');}
 function sectionHead(key,desc){const s=SECTION[key];return `<div class="h2"><span class="badge-ic ${s.bg}">${icon(s.ic)}</span>${s.name}</div>${desc?`<p class="sub">${desc}</p>`:''}`;}
@@ -737,14 +739,11 @@ async function saveFinSelect(){if(!finDraft.f1||!finDraft.f1.trim()){toast('①�
 async function saveFinChat(){try{await apiPost('saveFinal',authp({mode:'chat',rawAnswers:{answers:finDraft.answers},summaryText:buildFinSummary()}));finDraft=null;toast('結業反思完成');go('journey');}catch(e){toast(e.message,true);}}
 
 /* ============================ 8) 我的歷程 ============================ */
-async function renderJourney(){
-  loadingScreen();
-  const j=await loadJourney();
+function journeyDocHtml(j){
   const cm={};j.courses.forEach(c=>cm[c.courseId]=c);
   const refl=j.reflection.slice().sort((a,b)=>{const x=cm[a.courseId]||{},y=cm[b.courseId]||{};return (x.day-y.day)||(x.period-y.period)});
   const ji=(key)=>`<span class="ji ${SECTION[key].bg}">${icon(SECTION[key].ic)}</span>`;
-  app.innerHTML=topbar()+`<div class="page"><div class="card" id="journeyDoc">
-    <div class="jcover">
+  return `<div class="jcover">
       <div class="h1" style="margin:0">${esc(j.student.name)} 的學習歷程</div>
       <p class="sub">${esc(j.camp.campName)}・${esc(j.camp.batch)}　|　${esc(j.camp.startDate)} ~ ${esc(j.camp.endDate)}</p></div>
     <div class="jrow"><div class="lab">${ji('motivation')}學習動機</div>${j.motivation?`<div>${esc(j.motivation.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>
@@ -754,12 +753,35 @@ async function renderJourney(){
       ${j.challenge.length?j.challenge.map(c=>`<div style="margin-bottom:11px"><b>${c.status==='solved'?icon('check'):icon('puzzle')} ${esc(c.problem)}</b>${c.solution?`<div class="hint" style="margin-top:4px">${icon('spark')}${esc(c.solution)}</div>`:''}</div>`).join(''):'<div class="empty">尚未紀錄</div>'}</div>
     <div class="jrow"><div class="lab">${ji('outcome')}成果作品牆・${j.outcome.length}</div>
       ${j.outcome.length?`<div class="wall">${j.outcome.map(workCard).join('')}</div>`:'<div class="empty">尚未上傳</div>'}</div>
-    <div class="jrow"><div class="lab">${ji('final')}結業反思</div>${j.final?`<div>${esc(j.final.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>
-  </div>
+    <div class="jrow"><div class="lab">${ji('final')}結業反思</div>${j.final?`<div>${esc(j.final.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>`;
+}
+async function renderJourney(){
+  loadingScreen();
+  const j=await loadJourney();
+  app.innerHTML=topbar()+`<div class="page"><div class="card" id="journeyDoc">${journeyDocHtml(j)}</div>
   <button class="btn noprint" onclick="window.print()">${icon('book')}下載 / 列印 PDF</button>
   <button class="btn line noprint" style="margin-top:10px" onclick="confirmSendParent()">${icon('mail')}把學習歷程寄給家長</button>
   <p class="sub noprint" style="text-align:center">手機請選「儲存成 PDF」。家長會收到一封整理好的學習歷程信。</p>
   </div>`;
+}
+// 家長唯讀檢視（#/view/{studentId}/{token}），免登入
+async function renderView(params){
+  const sid=params[0]||'', token=params[1]||'';
+  app.innerHTML=`<div class="page"><div class="loading"><div class="spinner"></div><div>載入中…</div></div></div>`;
+  try{
+    const j=await apiGet('publicJourney',{studentId:sid, token:token});
+    app.innerHTML=`<div class="topbar noprint" style="justify-content:center"><img class="logo" src="${LOGO}" alt="AI4Kids" /></div>
+    <div class="page"><div class="card" id="journeyDoc">${journeyDocHtml(j)}</div>
+      <button class="btn noprint" onclick="window.print()">${icon('book')}下載 / 列印 PDF</button>
+      <div class="card noprint" style="text-align:center;background:var(--cyan-soft);border:0">
+        <p class="sub" style="margin:0 0 4px">想繼續補充或修改?</p>
+        <p style="font-weight:700;margin:0">請學員用學員編號 <b style="color:var(--cyan-deep)">${esc(sid)}</b> 登入平台編輯</p>
+        <a class="btn line" style="margin-top:12px;display:inline-flex;width:auto" href="https://ai4kids-tw.github.io/learning-journey/">前往登入平台 ${icon('arrow')}</a>
+      </div>
+    </div>`;
+  }catch(e){
+    app.innerHTML=`<div class="page"><div class="card" style="text-align:center;margin-top:40px"><div class="mic bg-pink" style="margin:0 auto 12px">${icon('info')}</div><div class="h2" style="justify-content:center">連結無效或已失效</div><p class="sub">${esc(e.message||'請確認連結是否完整')}</p></div></div>`;
+  }
 }
 function confirmSendParent(){showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>寄給家長</h3>
   <p class="sub">要把你目前的學習歷程整理成一封信，寄給家長嗎？之後有更新可以再寄一次。</p>
