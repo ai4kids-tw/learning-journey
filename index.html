@@ -326,9 +326,22 @@ async function renderLogin(){
       </div>
       <button class="btn" id="startBtn" style="margin-top:20px" onclick="startLogin()">開始 ${icon('arrow')}</button>
     </div>
-    <p class="sub" style="text-align:center">忘記編號或存取碼，請向現場助教詢問。</p>
+    <p class="sub" style="text-align:center"><a href="javascript:void(0)" onclick="showRecover()" style="color:var(--cyan-deep);font-weight:700;text-decoration:none">忘記學員編號 / 存取碼？</a></p>
   </div>`;
 }
+function showRecover(){showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>找回登入資訊</h3>
+  <p class="sub">輸入你當初登記的 Email，我們會把你的<b>學員編號和存取碼</b>寄給你（報名多個營隊會一起列出）。</p>
+  <input id="recEmail" class="input" type="email" inputmode="email" placeholder="你的 Email" style="margin-top:10px" />
+  <div class="warn" id="recWarn"></div>
+  <button class="btn" id="recBtn" onclick="doRecover()">寄給我</button>`);}
+async function doRecover(){const email=document.getElementById('recEmail').value.trim();
+  if(!EMAIL_RE.test(email)){document.getElementById('recWarn').innerHTML=`${icon('info')}請輸入正確的 Email`;return;}
+  const b=document.getElementById('recBtn'); if(b){b.disabled=true;b.textContent='寄送中…';}
+  try{const r=await apiPost('recoverLogin',{email:email});
+    showModal(`<div class="mic bg-cyan">${icon('check')}</div><h3>已寄出</h3>
+      <p class="sub">如果這個 Email 有登記過，你的學員編號和存取碼已經寄過去了，請到信箱查收。${r.dryRun?'<br><span style="color:var(--pink)">（測試模式：尚未真寄）</span>':''}</p>
+      <button class="btn" onclick="closeModal()">好</button>`);
+  }catch(e){document.getElementById('recWarn').innerHTML=`${icon('info')}${esc(e.message)}`;if(b){b.disabled=false;b.textContent='寄給我';}}}
 async function startLogin(){
   const studentId=document.getElementById('sid').value.trim();
   if(!studentId){document.getElementById('sidWarn').innerHTML=`${icon('info')}請輸入學員編號`;return;}
@@ -343,7 +356,8 @@ async function startLogin(){
       <div class="code-box" style="margin:14px 0;text-align:left">
         <div style="font-size:18px;font-weight:800;color:var(--cyan-deep)">${esc(r.name||'（此編號尚未登記姓名）')}</div>
         <div style="font-size:13px;color:var(--ink2);margin-top:4px">${esc(r.campName)}・${esc(r.batch)}</div></div>
-      <div class="row"><button class="btn ghost" onclick="closeModal()">不是我</button><button class="btn" onclick="afterConfirm()">是我，繼續</button></div>`);
+      <p class="hint" style="justify-content:center;text-align:center">報名多個營隊的話，請確認這是你<b>現在要記錄</b>的營隊；不是的話點「換編號」。</p>
+      <div class="row"><button class="btn ghost" onclick="reEnterId()">換編號</button><button class="btn" onclick="afterConfirm()">是我，繼續</button></div>`);
   }catch(e){toast(e.message,true);if(sbtn){sbtn.disabled=false;sbtn.innerHTML='開始 '+icon('arrow');}}
 }
 function afterConfirm(){
@@ -351,6 +365,7 @@ function afterConfirm(){
   // lookup 已回傳 registered，不再多打一次 studentExists（省一次讀表）
   if(LOOKUP.registered) askPin(); else askProfile();
 }
+function reEnterId(){ closeModal(); const el=document.getElementById('sid'); if(el){ el.value=''; el.focus(); } }
 function askPin(){showModal(`<div class="mic bg-cyan">${icon('user')}</div><h3>請輸入存取碼</h3>
   <p class="sub">歡迎回來，${esc(LOOKUP.name)}！輸入你的 4 碼存取碼登入。</p>
   <input id="pin" class="input" inputmode="numeric" maxlength="4" placeholder="• • • •" style="text-align:center;letter-spacing:10px;font-size:24px;font-weight:800;margin-top:12px" />
