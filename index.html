@@ -527,7 +527,7 @@ async function renderReflection(){
   const cur=courses.find(c=>c.courseId===reflCourseId);
   if(!reflDraft){
     const raw=ex?safeParse(ex.rawAnswers):null;
-    reflDraft=ex?{mode:ex.mode,a1:(raw&&raw.a1)||'',a2:(raw&&raw.a2)||'',a3:(raw&&raw.a3)||'',topic:(raw&&raw.topic)||'',role:(raw&&raw.role)||[],chal:(raw&&raw.chal)||'',improve:(raw&&raw.improve)||'',difficulty:ex.difficulty||0,_step:99,answers:(raw&&raw.answers)||{},_star:ex.difficulty||0}:{mode:'select',a1:'',a2:'',a3:'',topic:'',role:[],chal:'',improve:'',difficulty:0,_step:0,answers:{},_star:0};
+    reflDraft=ex?{mode:ex.mode,a1:(raw&&raw.a1)||'',a2:(raw&&raw.a2)||'',a3:(raw&&raw.a3)||'',topic:(raw&&raw.topic)||'',role:(raw&&raw.role)||[],chal:(raw&&raw.chal)||'',improve:(raw&&raw.improve)||'',difficulty:Number(ex.difficulty)||0,_step:99,answers:(raw&&raw.answers)||{},_star:Number(ex.difficulty)||0}:{mode:'select',a1:'',a2:'',a3:'',topic:'',role:[],chal:'',improve:'',difficulty:0,_step:0,answers:{},_star:0};
   }
   const mode=reflDraft.mode||'select', hack=cur.type==='hackathon';
   const days=[...new Set(courses.map(c=>c.day))];
@@ -734,7 +734,7 @@ async function renderJourney(){
       <p class="sub">${esc(j.camp.campName)}・${esc(j.camp.batch)}　|　${esc(j.camp.startDate)} ~ ${esc(j.camp.endDate)}</p></div>
     <div class="jrow"><div class="lab">${ji('motivation')}學習動機</div>${j.motivation?`<div>${esc(j.motivation.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>
     <div class="jrow"><div class="lab">${ji('reflection')}各堂心得・${refl.length}/${j.courses.length}</div>
-      ${refl.length?refl.map(r=>{const c=cm[r.courseId]||{};return `<div style="margin-bottom:14px"><div><span class="tag-day">Day${c.day} 第${c.period}堂</span><b>${esc(c.courseName)}</b> <span style="color:var(--yellow)">${'★'.repeat(r.difficulty||0)}</span></div><div class="hint" style="margin-top:5px">${esc(r.summaryText)}</div></div>`}).join(''):'<div class="empty">尚未填寫</div>'}</div>
+      ${refl.length?refl.map(r=>{const c=cm[r.courseId]||{};return `<div style="margin-bottom:14px"><div><span class="tag-day">Day${c.day} 第${c.period}堂</span><b>${esc(c.courseName)}</b> <span style="color:var(--yellow)">${'★'.repeat(Number(r.difficulty)||0)}</span></div><div class="hint" style="margin-top:5px">${esc(r.summaryText)}</div></div>`}).join(''):'<div class="empty">尚未填寫</div>'}</div>
     <div class="jrow"><div class="lab">${ji('challenge')}挑戰歷程・${j.challenge.length}</div>
       ${j.challenge.length?j.challenge.map(c=>`<div style="margin-bottom:11px"><b>${c.status==='solved'?icon('check'):icon('puzzle')} ${esc(c.problem)}</b>${c.solution?`<div class="hint" style="margin-top:4px">${icon('spark')}${esc(c.solution)}</div>`:''}</div>`).join(''):'<div class="empty">尚未紀錄</div>'}</div>
     <div class="jrow"><div class="lab">${ji('outcome')}成果作品牆・${j.outcome.length}</div>
