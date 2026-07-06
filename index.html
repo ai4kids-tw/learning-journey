@@ -843,7 +843,7 @@ function renderAdminTable(d){
         <button class="switch-btn" onclick="adminLogout()">${icon('switch')}登出</button>
       </div>
       <p class="sub">${esc(ADMIN.campName)}・${esc(d.batch)}　|　${d.total} 位學員，平均完成 ${avg}%</p>
-      <button class="btn line" style="margin-top:10px" onclick="campNotifyModal()">${icon('mail')}營後通知信（家長＋學員）</button>
+      <button class="btn line" style="margin-top:10px" onclick="openCampNotify()">${icon('mail')}營後通知信（家長＋學員）</button>
     </div>
     <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員（${d.total}）</div>
       <div style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
@@ -862,8 +862,11 @@ async function adminBatchSend(){
       <button class="btn" onclick="closeModal()">好</button>`);
   }catch(e){ closeModal(); toast(e.message,true); }
 }
+let CN_EXCLUDE=null;
+function openCampNotify(){ CN_EXCLUDE=null; campNotifyModal(); }
 function campNotifyModal(){
-  const rows=ADMINSTUDENTS.map(s=>`<label class="cn-row" data-k="${esc((s.name||'')+' '+s.studentId)}" style="display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--line)"><input type="checkbox" class="cn-inc" value="${esc(s.studentId)}" checked onchange="cnCount()" style="width:20px;height:20px;flex:none" /><span style="font-size:15px">${esc(s.name)} <span class="hint" style="margin:0">${esc(s.studentId)}</span></span></label>`).join('');
+  const ex=new Set(CN_EXCLUDE||[]);
+  const rows=ADMINSTUDENTS.map(s=>`<label class="cn-row" data-k="${esc((s.name||'')+' '+s.studentId)}" style="display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--line)"><input type="checkbox" class="cn-inc" value="${esc(s.studentId)}" ${ex.has(s.studentId)?'':'checked'} onchange="cnCount()" style="width:20px;height:20px;flex:none" /><span style="font-size:15px">${esc(s.name)} <span class="hint" style="margin:0">${esc(s.studentId)}</span></span></label>`).join('');
   showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>營後通知信</h3>
     <p class="sub">勾選＝會寄，取消＝排除（請假/沒到）。含個人歷程連結＋共同成果連結，寄給家長與學員。</p>
     <input class="input" placeholder="搜尋姓名或編號…" oninput="cnFilter(this.value)" style="margin:8px 0" />
@@ -875,11 +878,13 @@ function campNotifyModal(){
     <div id="cnList" style="max-height:44vh;overflow:auto;text-align:left;border:1px solid var(--line);border-radius:12px;padding:0 10px">${rows||'<div class="empty">沒有學員</div>'}</div>
     <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="doCampNotify(true)">先試算</button><button class="btn" onclick="doCampNotify(false)">確定寄送</button></div>`,'wide');
   cnCount();}
-function cnAll(v){document.querySelectorAll('#cnList .cn-row').forEach(r=>{if(r.style.display!=='none'){const c=r.querySelector('.cn-inc');if(c)c.checked=v;}});cnCount();}
+function cnAll(v){document.querySelectorAll('#cnList .cn-inc').forEach(c=>{c.checked=v;});cnCount();}
 function cnFilter(q){q=(q||'').trim().toLowerCase();document.querySelectorAll('#cnList .cn-row').forEach(r=>{r.style.display=r.getAttribute('data-k').toLowerCase().indexOf(q)>=0?'flex':'none';});}
 function cnCount(){const el=document.getElementById('cnCount');if(el)el.textContent='已選 '+document.querySelectorAll('#cnList .cn-inc:checked').length+' 位';}
 async function doCampNotify(dry){
   const exclude=[...document.querySelectorAll('.cn-inc:not(:checked)')].map(c=>c.value);
+  CN_EXCLUDE=exclude; // 記住勾選狀態，返回調整時還原
+  if(!dry){ const cnt=ADMINSTUDENTS.length-exclude.length; if(!confirm('確定要「真的寄出」給 '+cnt+' 位（家長與學員）嗎？')) return; }
   document.querySelectorAll('#modalbg .row button').forEach(b=>{b.disabled=true;b.textContent=dry?'試算中…':'寄送中…';});
   try{
     const r=await apiPost('adminSendCampNotify',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch,exclude:exclude,dryRun:dry});
