@@ -821,7 +821,9 @@ async function adminLogin(){
   }catch(e){ if(b){b.disabled=false;b.textContent='進入後台';} document.getElementById('aWarn').innerHTML=icon('info')+esc(e.message); }
 }
 function adminLogout(err){ ADMIN=null; sessionStorage.removeItem('ai4kids_lj_admin'); renderAdminLogin(err); }
+let ADMINSTUDENTS=[];
 function renderAdminTable(d){
+  ADMINSTUDENTS=d.students;
   const avg=d.students.length?Math.round(d.students.reduce((a,s)=>a+s.pct,0)/d.students.length):0;
   const rows=d.students.slice().sort((a,b)=>a.pct-b.pct).map(s=>`
     <div class="chal" style="margin-bottom:10px">
@@ -840,7 +842,7 @@ function renderAdminTable(d){
         <button class="switch-btn" onclick="adminLogout()">${icon('switch')}登出</button>
       </div>
       <p class="sub">${esc(ADMIN.campName)}・${esc(d.batch)}　|　${d.total} 位學員，平均完成 ${avg}%</p>
-      <button class="btn line" style="margin-top:10px" onclick="adminBatchSend()">${icon('mail')}結業批次寄家長</button>
+      <button class="btn line" style="margin-top:10px" onclick="campNotifyModal()">${icon('mail')}營後通知信（家長＋學員）</button>
     </div>
     <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員（${d.total}）</div>
       <div style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
@@ -859,6 +861,25 @@ async function adminBatchSend(){
       <button class="btn" onclick="closeModal()">好</button>`);
   }catch(e){ closeModal(); toast(e.message,true); }
 }
+function campNotifyModal(){
+  const rows=ADMINSTUDENTS.map(s=>`<label style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line)"><input type="checkbox" class="cn-inc" value="${esc(s.studentId)}" checked style="width:18px;height:18px;flex:none" /><span>${esc(s.name)} <span class="hint" style="margin:0">${esc(s.studentId)}</span></span></label>`).join('');
+  showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>營後通知信</h3>
+    <p class="sub">取消勾選要<b>排除</b>的學員（請假/沒到）。信件含「個人歷程連結 + 共同成果連結」，寄給家長與學員。</p>
+    <p class="hint">${icon('info')}請先確認資料庫 CampNotify 分頁已填好成果連結。</p>
+    <div style="max-height:44vh;overflow:auto;margin:10px 0;text-align:left">${rows||'<div class="empty">沒有學員</div>'}</div>
+    <div class="row"><button class="btn ghost" onclick="doCampNotify(true)">先試算</button><button class="btn" onclick="doCampNotify(false)">確定寄送</button></div>`);}
+async function doCampNotify(dry){
+  const exclude=[...document.querySelectorAll('.cn-inc:not(:checked)')].map(c=>c.value);
+  document.querySelectorAll('#modalbg .row button').forEach(b=>{b.disabled=true;b.textContent=dry?'試算中…':'寄送中…';});
+  try{
+    const r=await apiPost('adminSendCampNotify',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch,exclude:exclude,dryRun:dry});
+    const list=r.sent.slice(0,60).map(x=>`<div>• ${esc(x.name)} → ${esc(x.to)}${x.registered?'':'<span style="color:var(--pink)">（未登入平台，無個人歷程）</span>'}</div>`).join('');
+    const skip=r.skipped.length?`<div class="hint" style="margin-top:8px">略過 ${r.skipped.length}：${r.skipped.slice(0,30).map(x=>esc(x.name)+'（'+esc(x.reason)+'）').join('、')}</div>`:'';
+    showModal(`<div class="mic ${dry?'bg-yellow':'bg-cyan'}">${icon(dry?'info':'check')}</div><h3>${dry?'試算結果（尚未寄出）':'已寄送'}</h3>
+      <p class="sub">${dry?'將寄給 ':'已寄給 '}<b>${r.sentCount}</b> 位（共 ${r.total} 位，排除/略過 ${r.total-r.sentCount}）</p>
+      <div style="max-height:38vh;overflow:auto;font-size:14px;margin:10px 0;line-height:1.8">${list}</div>${skip}
+      ${dry?`<div class="row"><button class="btn ghost" onclick="campNotifyModal()">返回調整</button><button class="btn" onclick="doCampNotify(false)">確定寄送</button></div>`:`<button class="btn" onclick="closeModal();renderAdmin()">好</button>`}`);
+  }catch(e){ closeModal(); toast(e.message,true); }}
 function adminReset(sid){showModal(`<div class="mic bg-yellow">${icon('user')}</div><h3>重設存取碼</h3>
   <p class="sub">要重設 <b>${esc(sid)}</b> 的存取碼嗎？舊碼會立即失效，請把新碼告知學生。</p>
   <div class="row" style="margin-top:14px"><button class="btn ghost" onclick="closeModal()">取消</button><button class="btn" onclick="doAdminReset('${esc(sid)}')">重設</button></div>`);}
