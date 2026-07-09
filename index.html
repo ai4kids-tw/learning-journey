@@ -157,14 +157,29 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
 .loading{display:flex; flex-direction:column; align-items:center; gap:14px; padding:60px 0; color:var(--muted)}
 .spinner{width:38px; height:38px; border:3.5px solid var(--cyan-soft); border-top-color:var(--cyan); border-radius:50%; animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* 後台桌機寬版（RWD：手機不變，≥900px 才展開） */
+/* 後台桌機寬版（RWD：手機不變，≥768px 才展開） */
 .wide-mode .app{max-width:480px}
 .admin-grid{display:grid; grid-template-columns:1fr; gap:12px}
-@media (min-width:900px){
-  .wide-mode .app{max-width:1100px}
+/* Excel 式表格 */
+.atbl-wrap{overflow-x:auto; margin-top:12px; border:1px solid var(--line); border-radius:12px; -webkit-overflow-scrolling:touch}
+.atbl{width:100%; border-collapse:collapse; font-size:14px; min-width:760px}
+.atbl th,.atbl td{padding:11px 13px; text-align:left; border-bottom:1px solid var(--line); white-space:nowrap; vertical-align:middle}
+.atbl th{font-size:12.5px; color:var(--muted); font-weight:800; background:var(--cyan-soft); position:sticky; top:0; z-index:1}
+.atbl tbody tr{cursor:pointer; transition:background .12s}
+.atbl tbody tr:hover{background:var(--cyan-soft)}
+.atbl tbody tr:last-child td{border-bottom:none}
+.atbl .c-num{text-align:center}
+.atbl .c-mut{color:var(--muted); font-size:13px}
+.atbl .c-mail{color:var(--muted); font-size:13px; white-space:normal; word-break:break-all; min-width:180px}
+.atbl .c-act{text-align:right; white-space:nowrap}
+.atbl .c-act .btn{display:inline-block; margin-left:6px}
+.mini-bar{display:inline-block; width:56px; height:6px; border-radius:3px; background:var(--line); vertical-align:middle; overflow:hidden; margin-left:4px}
+.mini-bar i{display:block; height:100%; background:var(--cyan)}
+@media (min-width:768px){
+  .wide-mode .app{max-width:1240px}
   .wide-mode .page{padding:26px 34px}
   .wide-mode .admin-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
-  .wide-mode .modal.wide{max-width:760px}
+  .wide-mode .modal.wide{max-width:780px}
 }
 @media print{
   body{background:#fff}
@@ -837,15 +852,23 @@ function renderAdminTable(d){
   ADMINSTUDENTS=d.students;
   const avg=d.students.length?Math.round(d.students.reduce((a,s)=>a+s.pct,0)/d.students.length):0;
   const rows=d.students.slice().sort((a,b)=>a.pct-b.pct).map(s=>`
-    <div class="chal" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><b style="font-size:15px">${esc(s.name)}</b> <span class="hint" style="margin:0">${esc(s.studentId)}</span></div>
-        <span class="id-chip" style="font-size:12px">PIN ${esc(s.pin)}</span>
-      </div>
-      <div class="prog-top" style="margin-top:8px"><div class="pct" style="font-size:22px">${s.pct}<small>%</small></div><div class="bar"><i style="width:${s.pct}%"></i></div></div>
-      <div class="hint" style="margin-top:7px">心得 ${s.reflCount}/${s.totalCourses}・挑戰 ${s.challenge}・成果 ${s.outcome}・家長 ${esc(s.parentEmail||'—')}</div>
-      <button class="btn line sm" style="width:100%;margin-top:10px" onclick="adminReset('${esc(s.studentId)}')">重設 PIN</button>
-    </div>`).join('');
+    <tr onclick="openStudentDetail('${esc(s.studentId)}')">
+      <td><b>${esc(s.name)}</b></td>
+      <td class="c-mut">${esc(s.studentId)}</td>
+      <td class="c-num"><span style="font-weight:800">${s.pct}%</span> <span class="mini-bar"><i style="width:${s.pct}%"></i></span></td>
+      <td class="c-num">${s.reflCount}/${s.totalCourses}</td>
+      <td class="c-num">${s.challenge}</td>
+      <td class="c-num">${s.outcome}</td>
+      <td class="c-mail">${esc(s.parentEmail||'—')}</td>
+      <td class="c-num">${esc(s.pin)}</td>
+      <td class="c-act" onclick="event.stopPropagation()">
+        <button class="btn line sm" style="width:auto;padding:6px 12px" onclick="openStudentDetail('${esc(s.studentId)}')">詳情</button>
+        <button class="btn line sm" style="width:auto;padding:6px 12px" onclick="adminReset('${esc(s.studentId)}')">重設PIN</button>
+      </td>
+    </tr>`).join('');
+  const table=`<div class="atbl-wrap"><table class="atbl">
+      <thead><tr><th>姓名</th><th>編號</th><th>完成率</th><th class="c-num">心得</th><th class="c-num">挑戰</th><th class="c-num">成果</th><th>家長 Email</th><th class="c-num">存取碼</th><th class="c-act">操作</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
   app.innerHTML=`<div class="page">
     <div class="card">
       <div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>搜尋學員／家長</div>
@@ -861,8 +884,9 @@ function renderAdminTable(d){
       <p class="sub">${esc(ADMIN.campName)}・${esc(d.batch)}　|　${d.total} 位學員，平均完成 ${avg}%</p>
       <button class="btn line" style="margin-top:10px" onclick="openCampNotify()">${icon('mail')}營後通知信（家長＋學員）</button>
     </div>
-    <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員（${d.total}）</div>
-      <div class="admin-grid" style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
+    <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員完成率（${d.total}）</div>
+      <p class="sub">點任一列可開啟學員資料與功能</p>
+      ${d.students.length?table:'<div class="empty">這個梯次還沒有學員登入</div>'}
     </div>
   </div>`;
 }
