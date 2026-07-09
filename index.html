@@ -157,6 +157,15 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
 .loading{display:flex; flex-direction:column; align-items:center; gap:14px; padding:60px 0; color:var(--muted)}
 .spinner{width:38px; height:38px; border:3.5px solid var(--cyan-soft); border-top-color:var(--cyan); border-radius:50%; animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+/* 後台桌機寬版（RWD：手機不變，≥900px 才展開） */
+.wide-mode .app{max-width:480px}
+.admin-grid{display:grid; grid-template-columns:1fr; gap:12px}
+@media (min-width:900px){
+  .wide-mode .app{max-width:1100px}
+  .wide-mode .page{padding:26px 34px}
+  .wide-mode .admin-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .wide-mode .modal.wide{max-width:760px}
+}
 @media print{
   body{background:#fff}
   .app{max-width:100%; padding:0}
@@ -271,6 +280,7 @@ function currentRoute(){const r=parseHash().route;if(r==='view')return 'view';re
 async function render(){
   const r=currentRoute();
   if(r!=='login'&&r!=='admin'&&r!=='view'&&!ME){go('login');return;}
+  document.body.classList.toggle('wide-mode', r==='admin'); // 後台桌機寬版
   window.scrollTo(0,0);
   renderTabbar(r);
   try{
@@ -802,7 +812,7 @@ async function renderAdmin(){
 }
 async function renderAdminLogin(err){
   const camps=await apiGet('getCamps');
-  app.innerHTML=`<div class="page"><div class="card" style="margin-top:30px">
+  app.innerHTML=`<div class="page"><div class="card" style="margin:30px auto 0;max-width:460px">
     <img src="${LOGO}" style="height:30px;margin-bottom:14px" />
     <div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>TA 後台</div>
     <label class="fld">通關碼</label><input id="apass" class="input" type="password" placeholder="輸入 TA 通關碼" />
@@ -852,7 +862,7 @@ function renderAdminTable(d){
       <button class="btn line" style="margin-top:10px" onclick="openCampNotify()">${icon('mail')}營後通知信（家長＋學員）</button>
     </div>
     <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員（${d.total}）</div>
-      <div style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
+      <div class="admin-grid" style="margin-top:14px">${d.students.length?rows:'<div class="empty">這個梯次還沒有學員登入</div>'}</div>
     </div>
   </div>`;
 }
@@ -867,13 +877,13 @@ async function doAdminSearch(v){
   try{
     const d=await apiGet('adminSearch',{passcode:ADMIN.passcode,q:v});
     if(!d.results.length){ box.innerHTML='<div class="hint">查無符合的學員</div>'; return; }
-    box.innerHTML=d.results.map(s=>`<div class="chal" style="margin-bottom:8px;cursor:pointer" onclick="openStudentDetail('${esc(s.studentId)}')">
+    box.innerHTML=`<div class="admin-grid">`+d.results.map(s=>`<div class="chal" style="cursor:pointer" onclick="openStudentDetail('${esc(s.studentId)}')">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div><b>${esc(s.name)}</b> <span class="hint" style="margin:0">${esc(s.studentId)}</span></div>
         <span class="hint" style="margin:0">${s.registered?'已登入':'<span style="color:var(--pink)">未登入</span>'}</span>
       </div>
       <div class="hint" style="margin-top:4px">${esc(s.campName)}・${esc(s.batch)}｜家長 ${esc(s.parentEmail||'—')}${s.email?'｜學員 '+esc(s.email):''}</div>
-    </div>`).join('')+(d.truncated?'<div class="hint">結果過多，僅顯示前 50 筆，請縮小關鍵字</div>':'');
+    </div>`).join('')+`</div>`+(d.truncated?'<div class="hint" style="margin-top:8px">結果過多，僅顯示前 50 筆，請縮小關鍵字</div>':'');
   }catch(e){ box.innerHTML='<div class="hint" style="color:var(--pink)">'+esc(e.message)+'</div>'; }
 }
 async function openStudentDetail(sid){
