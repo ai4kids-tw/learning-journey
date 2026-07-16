@@ -706,7 +706,7 @@ async function renderOutcome(){
       <button class="btn" id="upBtn" onclick="uploadOutcome()">${icon('upload')}上傳</button>
     </div>
     <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('award')}</span>我的作品牆・${list.length}</div>
-      ${list.length?`<div class="wall">${list.map(workCard).join('')}</div>`:'<div class="empty">還沒有成果，快上傳第一件！</div>'}</div></div>`;
+      ${list.length?`<div class="wall">${list.map(o=>workCard(o,true)).join('')}</div>`:'<div class="empty">還沒有成果，快上傳第一件！</div>'}</div></div>`;
 }
 function onPickFile(e){const f=e.target.files[0];if(!f)return;const isPdf=f.type==='application/pdf',lim=isPdf?20:10;
   if(f.size>lim*1024*1024){toast(`檔案太大（上限 ${lim}MB）`,true);e.target.value='';outFile=null;document.getElementById('preview').innerHTML='';return;}
@@ -720,7 +720,11 @@ async function uploadOutcome(){if(!outFile){toast('先選一個檔案',true);ret
 // Drive 縮圖（圖片/PDF 皆可）；載入失敗退回檔案圖示
 function workThumb(o){const t=`https://drive.google.com/thumbnail?id=${esc(o.driveFileId)}&sz=w600`;
   return `<a href="${o.driveUrl}" target="_blank" rel="noopener" style="text-decoration:none"><img class="thumb" src="${t}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="file" style="display:none">${icon('file')}</div></a>`;}
-function workCard(o){return `<div class="work"><span class="tag">${icon(TYPE_ICON[o.type])}${TYPE_LABEL[o.type]}</span>${workThumb(o)}<div class="cap">${esc(o.caption||'')}</div></div>`;}
+function workCard(o,canDel){return `<div class="work"><span class="tag">${icon(TYPE_ICON[o.type])}${TYPE_LABEL[o.type]}</span>${workThumb(o)}<div class="cap">${esc(o.caption||'')}</div>${canDel?`<button class="btn ghost sm" style="width:100%;margin-top:8px;color:var(--pink)" onclick="delOutcome('${esc(o.recordId)}',event)">${icon('info')}刪除</button>`:''}</div>`;}
+async function delOutcome(recordId,e){ if(e){e.preventDefault();e.stopPropagation();}
+  if(!confirm('確定刪除這件成果嗎？此動作無法復原（檔案會移到雲端垃圾桶）。')) return;
+  try{ await apiPost('deleteOutcome',authp({recordId:recordId})); JCACHE=null; toast('已刪除'); render(); }
+  catch(err){ toast(err.message,true); }}
 
 /* ============================ 7) 結業反思 ============================ */
 let finDraft=null;
@@ -928,12 +932,25 @@ function renderStudentDetail(d){
       ${row('存取碼',s.pin?esc(s.pin):'（未登入）')}
       ${row('歷程進度',esc(summ))}
     </div>
+    ${d.outcomes&&d.outcomes.length?`<div style="margin:4px 0 12px;text-align:left">
+      <div class="hint" style="margin:0 0 4px">成果作品（${d.outcomes.length}）— 可刪除重複／錯誤的</div>
+      ${d.outcomes.map(o=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">
+        <span class="hint" style="margin:0;flex:none">${esc(TYPE_LABEL[o.type]||o.type)}</span>
+        <a href="${o.driveUrl}" target="_blank" rel="noopener" style="font-size:13px;flex:1;color:var(--cyan-deep);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.caption||'（無說明）')}</a>
+        <button class="btn ghost sm" style="color:var(--pink);flex:none" onclick="adminDelOutcome('${esc(o.recordId)}','${esc(s.studentId)}')">刪除</button>
+      </div>`).join('')}
+    </div>`:''}
     <div class="row" style="gap:8px;flex-wrap:wrap">
       ${d.viewUrl?`<a class="btn line sm" href="${d.viewUrl}" target="_blank" rel="noopener">檢視／下載歷程</a>`:''}
       ${d.registered?`<button class="btn line sm" onclick="sendJourneyPick('${esc(s.studentId)}')">寄送歷程</button>`:''}
       <button class="btn line sm" onclick="openStudentEdit('${esc(s.studentId)}','${esc(s.campId)}','${esc(s.batch)}')">補／編輯資料</button>
     </div>
     <button class="btn ghost" style="margin-top:12px" onclick="closeModal()">關閉</button>`,'wide');
+}
+async function adminDelOutcome(recordId,sid){
+  if(!confirm('確定刪除這件成果？此動作無法復原（檔案會移到雲端垃圾桶）。')) return;
+  try{ await apiGet('adminDeleteOutcome',{passcode:ADMIN.passcode,recordId:recordId}); toast('已刪除'); openStudentDetail(sid); }
+  catch(e){ toast(e.message,true); }
 }
 function sendJourneyPick(sid){
   showModal(`<div class="mic bg-cyan">${icon('mail')}</div><h3>寄送學習歷程</h3><p class="sub">寄件者 service@ai4kids.ai，含照片。要寄給誰？</p>
