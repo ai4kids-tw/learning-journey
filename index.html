@@ -564,7 +564,11 @@ async function renderReflection(){
   if(!reflCourseId){
     const today=todayStr();let t=courses.filter(c=>c.courseDate===today);
     if(!t.length){const past=courses.filter(c=>c.courseDate<=today);t=past.length?[past[past.length-1]]:[courses[0]];}
-    reflCourseId=t.length?t.sort((a,b)=>b.period-a.period)[0].courseId:courses[0].courseId;
+    // 預設＝今天「還沒填過」的最早一堂；都填過才取最後一堂。
+    // （舊版取 period 最大＝當天最後一堂，導致上午下課填的心得被標到下午那堂，下午重填時又被覆蓋）
+    const filled=new Set((reflJourney.reflection||[]).map(r=>r.courseId));
+    const asc=t.slice().sort((a,b)=>a.period-b.period);
+    reflCourseId=(asc.find(c=>!filled.has(c.courseId))||asc[asc.length-1]||courses[0]).courseId;
   }
   const ex=reflJourney.reflection.find(r=>r.courseId===reflCourseId);
   const cur=courses.find(c=>c.courseId===reflCourseId);
