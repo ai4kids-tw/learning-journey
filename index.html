@@ -570,6 +570,7 @@ async function renderReflection(){
     const asc=t.slice().sort((a,b)=>a.period-b.period);
     reflCourseId=(asc.find(c=>!filled.has(c.courseId))||asc[asc.length-1]||courses[0]).courseId;
   }
+  await loadReflHist(reflCourseId);   // 先前被蓋掉的版本（唯讀，供學生自行取用）
   const ex=reflJourney.reflection.find(r=>r.courseId===reflCourseId);
   const cur=courses.find(c=>c.courseId===reflCourseId);
   if(!reflDraft){
@@ -590,8 +591,43 @@ async function renderReflection(){
       <button class="${mode==='chat'?'on':''}" onclick="reflDraft.mode='chat';reflDraft._step=reflDraft._step===99?0:reflDraft._step;render()">${icon('chat')}對話引導</button>
     </div>
     ${mode==='select'?(hack?reflSelectHack():reflSelect()):(hack?reflChatHack(cur):reflChat(cur))}
-  </div></div>`;
+  </div>${reflHistCard(reflCourseId,mode)}</div>`;
 }
+/* ---- 你先前寫過的版本（唯讀）：系統絕不自動改動學生現有內容，只提供複製／附加 ---- */
+let REFL_HIST={};
+async function loadReflHist(cid){
+  if(REFL_HIST[cid]) return REFL_HIST[cid];
+  try{ const d=await apiGet('getReflectionHistory',authp({courseId:cid})); REFL_HIST[cid]=d.versions||[]; }
+  catch(e){ REFL_HIST[cid]=[]; }
+  return REFL_HIST[cid];
+}
+function fmtHistTime(s){ const d=new Date(s); return isNaN(d.getTime())?String(s||''):`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function reflHistCard(cid,mode){
+  const hs=REFL_HIST[cid]||[];
+  if(!hs.length) return '';
+  return `<div class="card" style="margin-top:16px">
+    <div class="h2"><span class="badge-ic bg-yellow">${icon('info')}</span>你先前寫過的版本（${hs.length}）</div>
+    <p class="sub">這是你這堂課先前寫過、後來被蓋掉的內容，我們幫你留起來了。<b>系統不會自動改動你現在寫的東西</b>；想用的話，自己複製或附加就好。</p>
+    ${hs.map((v,i)=>`<div class="chal" style="margin-bottom:10px">
+      <div class="hint" style="margin:0 0 5px">版本 ${esc(v.version)}・${esc(fmtHistTime(v.updatedAt))}</div>
+      <div style="font-size:14px;white-space:pre-wrap;line-height:1.75">${esc(v.summaryText||'')}</div>
+      <div class="row" style="gap:8px;margin-top:9px">
+        <button class="btn ghost sm" onclick="copyHist('${esc(cid)}',${i})">複製</button>
+        ${mode==='select'?`<button class="btn ghost sm" onclick="appendHist('${esc(cid)}',${i})">附加到②</button>`:''}
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+function copyHist(cid,i){const v=(REFL_HIST[cid]||[])[i];if(!v)return;
+  const t=v.summaryText||'';
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast('已複製，貼到你想放的地方')).catch(()=>toast('複製失敗，請長按選取文字',true));}
+  else toast('請長按選取文字複製',true);}
+function appendHist(cid,i){const v=(REFL_HIST[cid]||[])[i];if(!v)return;
+  const raw=safeParse(v.rawAnswers)||{};
+  const t=String(raw.a2||v.summaryText||'').trim(); if(!t)return;
+  // 只「附加」到草稿末尾，不取代任何既有文字；且尚未存檔，學生檢查後自己按儲存
+  reflDraft.a2=(reflDraft.a2&&reflDraft.a2.trim()? reflDraft.a2.trim()+'\n':'')+t;
+  toast('已附加到②，檢查後再按儲存');render();}
 function reflSelect(){const chips=['認識新觀念','動手做實作','聽老師講案例','分組討論'];
   return `<label class="fld"><span class="q">1</span>這堂課在做什麼？</label>
     <div class="chips">${chips.map(c=>`<span class="chip" onclick="reflDraft.a1='${c}';render()">${c}</span>`).join('')}</div>
