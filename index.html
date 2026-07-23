@@ -205,10 +205,12 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwDkqs06qVhzWhwc0rL6Mod
 const IDEMPOTENT_POST=new Set(['login','saveMotivation','saveReflection','saveFinal','updateChallenge','sendToParent','adminSendParents']);
 // 視為「暫時性忙碌」的錯誤 → 退避後重試
 const TRANSIENT=/同時呼叫|concurrent|too many|逾時|timeout|忙碌|Lock|invoked too many/i;
+// iOS/瀏覽器的網路層失敗訊息（fetch 被中斷、掉線、連線取消）→ 也視為可重試，並轉成中文
+const NETERR=/Load failed|Failed to fetch|NetworkError|network connection|connection was lost|cancelled|The request timed out/i;
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 async function apiCall(method, action, params){
   const retryable = (method==='GET') || IDEMPOTENT_POST.has(action);
-  const max = retryable ? 4 : 1;
+  const max = retryable ? 6 : 1;   // 手機網路易斷，讀取/冪等操作多重試幾次；非冪等(如上傳/註冊)不重試，避免重複
   let lastErr;
   for(let i=0;i<max;i++){
     try{
@@ -226,7 +228,8 @@ async function apiCall(method, action, params){
       if(i<max-1) await sleep(500*Math.pow(2,i)*(0.7+Math.random()*0.6)); // 0.5→1→2s + 抖動
     }
   }
-  throw new Error((lastErr && lastErr.message) || '連線忙碌，請稍後再試');
+  const rawMsg=(lastErr && lastErr.message) || '';
+  throw new Error(NETERR.test(rawMsg) ? '網路不穩，載入失敗，請點下方重試或稍後再試' : (rawMsg || '連線忙碌，請稍後再試'));
 }
 async function apiGet(action, params){ return apiCall('GET', action, params); }
 async function apiPost(action, params){ return apiCall('POST', action, params); }
