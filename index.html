@@ -207,29 +207,42 @@ const IDEMPOTENT_POST=new Set(['login','saveMotivation','saveReflection','saveFi
 const TRANSIENT=/同時呼叫|concurrent|too many|逾時|timeout|忙碌|Lock|invoked too many/i;
 // iOS/瀏覽器的網路層失敗訊息（fetch 被中斷、掉線、連線取消）→ 也視為可重試，並轉成中文
 const NETERR=/Load failed|Failed to fetch|NetworkError|network connection|connection was lost|cancelled|The request timed out/i;
+// 鎖定逾時：代表根本沒搶到鎖 → 操作「確定沒執行到」→ 任何動作(含建檔)都能安全重試，不會產生重複
+const LOCKERR=/鎖定逾時|佔用鎖定|Lock timeout|obtain lock|could not acquire|holding the lock|LockService/i;
 function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
 async function apiCall(method, action, params){
-  const retryable = (method==='GET') || IDEMPOTENT_POST.has(action);
-  const max = retryable ? 6 : 1;   // 手機網路易斷，讀取/冪等操作多重試幾次；非冪等(如上傳/註冊)不重試，避免重複
+  const idempotent = (method==='GET') || IDEMPOTENT_POST.has(action);
+  const MAX=6;
   let lastErr;
-  for(let i=0;i<max;i++){
+  for(let i=0;i<MAX;i++){
     try{
       let r;
       if(method==='GET'){ const qs=new URLSearchParams(Object.assign({action:action}, params||{})).toString(); r=await fetch(API_URL+'?'+qs); }
       else{ r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:action}, params||{}))}); }
       const txt=await r.text();
       let j; try{ j=JSON.parse(txt); }catch(pe){ throw {transient:true, message:'伺服器忙碌'}; }
-      if(!j.ok){ if(TRANSIENT.test(j.error||'')) throw {transient:true, message:j.error}; throw Object.assign(new Error(j.error||'發生錯誤'),{business:true}); }
+      if(!j.ok){
+        const em=j.error||'發生錯誤';
+        if(LOCKERR.test(em)) throw {transient:true, safe:true, message:em};   // 鎖逾時＝沒執行到 → 一律可安全重試
+        if(TRANSIENT.test(em)) throw {transient:true, message:em};
+        throw Object.assign(new Error(em),{business:true});
+      }
       if(method!=='GET' && /^(save|add|update)/.test(action)) invalidateJourney();
       return j.data;
     }catch(e){
       if(e && e.business) throw e;
       lastErr=e;
-      if(i<max-1) await sleep(500*Math.pow(2,i)*(0.7+Math.random()*0.6)); // 0.5→1→2s + 抖動
+      // 可重試條件：GET/冪等操作 的暫時性錯誤，或「任何操作」遇到鎖逾時(確定沒執行到)
+      const canRetry = (e && e.safe) || idempotent;
+      if(!canRetry || i>=MAX-1) break;
+      await sleep(500*Math.pow(2,Math.min(i,4))*(0.7+Math.random()*0.6)); // 0.5→1→2→4→4s + 抖動
     }
   }
   const rawMsg=(lastErr && lastErr.message) || '';
-  throw new Error(NETERR.test(rawMsg) ? '網路不穩，載入失敗，請點下方重試或稍後再試' : (rawMsg || '連線忙碌，請稍後再試'));
+  throw new Error(
+    LOCKERR.test(rawMsg) ? '目前使用人數較多，請稍等幾秒再送出一次'
+    : NETERR.test(rawMsg) ? '網路不穩，載入失敗，請點下方重試或稍後再試'
+    : (rawMsg || '連線忙碌，請稍後再試'));
 }
 async function apiGet(action, params){ return apiCall('GET', action, params); }
 async function apiPost(action, params){ return apiCall('POST', action, params); }
