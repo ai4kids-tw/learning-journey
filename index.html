@@ -240,6 +240,22 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
 .lp-dom{background:#fff; border:1px solid var(--line); border-left:4px solid var(--cyan); border-radius:16px; box-shadow:var(--sh-md); padding:20px 22px}
 .lp-dom h4{font-size:18px; font-weight:800; margin:0; color:var(--ink)}
 .lp-dom p{color:var(--ink2); font-size:14px; line-height:1.65; margin:8px 0 0}
+/* 歷屆精選跑馬燈 */
+.mq{overflow:hidden; position:relative; margin:14px 0; -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent); mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.mq-track{display:flex; gap:16px; width:max-content; padding:6px 16px}
+.mq-a{animation:mqscroll 70s linear infinite}
+.mq-b{animation:mqscroll 60s linear infinite reverse}
+.mq:hover .mq-track{animation-play-state:paused}
+@keyframes mqscroll{from{transform:translateX(0)} to{transform:translateX(-50%)}}
+.jcard{flex:0 0 342px; background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:var(--sh-md); padding:20px 22px 18px; display:flex; flex-direction:column}
+.jcard .qt{color:#bcd4e4; font:900 40px/.5 Georgia,serif; height:20px}
+.jcard p{color:var(--ink); font-size:14.5px; line-height:1.85; margin:0; flex:1}
+.jcard .by{color:var(--cyan-deep); font-size:12.5px; font-weight:800; margin-top:14px; display:flex; align-items:center; gap:6px}
+.jcard .by .ic{font-size:14px}
+.dcard{flex:0 0 300px}
+.dcard img{width:300px; height:169px; object-fit:cover; border-radius:14px; box-shadow:var(--sh-md); display:block; background:#0f1b30}
+.dcard .cap{color:var(--ink2); font-size:13px; margin-top:9px; font-weight:600}
+@media (max-width:860px){.jcard{flex-basis:270px} .dcard{flex-basis:252px} .dcard img{width:252px; height:142px}}
 .lp-final{background:linear-gradient(100deg,var(--cyan),#0a9aa2); text-align:center; padding:66px 24px}
 .lp-final h2{color:#fff; font-size:29px; font-weight:900; margin:0}
 .lp-final p{color:#e3fbfc; font-size:16px; margin:12px 0 0}
@@ -431,7 +447,28 @@ function computeProgress(j){const total=j.courses.length,refl=j.reflection.lengt
 /* ============================ 0) Landing 首頁（未登入進站先看到） ============================ */
 const SITE_URL='https://ai4kids.ai';
 function lpTile(img,label){return `<div class="lp-tile" style="background-image:url('assets/${img}')"><span>${label}</span></div>`;}
-function lpGal(img,meta){return `<div class="lp-g"><div class="bg" style="background-image:url('assets/${img}')"></div><div class="ov"></div><span class="pick">精選</span><div class="meta"><b>學員歷程</b><small>${meta}</small></div></div>`;}
+function jCard(text,by){return `<div class="jcard"><div class="qt">&ldquo;</div><p>${esc(text)}</p><div class="by">${icon('user')}${esc(by)}</div></div>`;}
+function dCard(img,cap){return `<div class="dcard"><img src="assets/featured/${img}" alt="" loading="lazy"><div class="cap">${esc(cap)}</div></div>`;}
+// 歷屆學員反思文章（取自資料庫，姓名已隱去）
+const JQUOTES=[
+ ['最難忘的是最後一天的黑客松拿下第二名——到上台報告前一刻，簡報都不能再動了，還是有人在跑程式，想把最後一個 model 跑完。平常大家話不多，但競賽時全組都盡力，連不用上台的人也在台下幫忙計時，是很順利的團隊合作。','AI 醫療專題營'],
+ ['身為一名擊劍選手，這次營隊讓我第一次從科技的角度思考怎麼提升運動表現。我們用 YOLO 做物件偵測、用人體姿態估計建立骨架，再透過 GCN 判斷動作對不對。我把擊劍動作結合姿態辨識，更確信 AI 未來能協助教練分析技術、甚至預防運動傷害。','清大棒球運動科技營'],
+ ['在黑客松做出 Foul Ball Detect System，我才體會到 AI 與數據不只是賽場安全的即時防護，更是解開球員潛能的鑰匙——針對擊球初速 90 mph 以上、極易造成傷害的界外飛球做即時預警，把技術真正用在解決現實世界的安全問題。','清大棒球運動科技營'],
+ ['本來以為只是用 ChatGPT 幫自己，最後學會用 Hermes Agent 這種開源 AI，把一個構想延伸成網站、影片、Podcast 與簡報全套作品。原來 AI Agent 結合內容創作與技術開發的潛力，遠比我當初想的單純寫程式豐富許多。','AI 助理開發實作營'],
+ ['最深刻的是親手做桌球拍、把資料匯入的那一刻——原來 AI 已經進步到能捕捉動作和力道。了解硬體的限制之後，我開始思考「我的運動方式能不能更進步？」，想把學到的東西結合在自己熱愛的運動上。','成大 AI 運動數據營'],
+ ['除了認識生成式 AI 的運作原理，也了解電腦視覺、機器學習在醫療影像與資料分析的實際應用。我發現 AI 並不是單純靠程式運作，而是透過大量資料訓練模型——資料的品質，和演算法一樣重要。','AI 醫療專題營'],
+ ['平常在家不會特別剪影片，AI 也只拿來問功課。這次最大的收穫，是學會用 AI 製作影片、生成自己想要的圖片，真的做出了成品。未來更有空的時候，想拍生活 vlog，把這次學到的一點一點應用上去。','AI 影音創作營'],
+ ['學會了不同無人機的操作，也實際用空拍機拍攝。在老師和助教的教導下成功寫出無人機程式，並用 AI 把空拍下來的資料做影像分析；和同組同學討論，也增加了分工合作的經驗。接下來想挑戰更複雜的程式，尤其是無人機表演。','中小學無人機營'],
+];
+// 歷屆黑客松成果簡報封面（不同主題，姓名已模糊）
+const DCOVERS=[
+ ['melanoma.jpg','AI 醫療・黑色素痣智慧診斷系統'],
+ ['baseball.jpg','運動科技・本壘板偵測系統'],
+ ['lunglens.jpg','AI 醫療・LungLens 肺部塌陷偵測'],
+ ['sport.jpg','運動數據・AI 智慧桌球動作分析'],
+ ['yixin.jpg','AI 醫療・易心測影像判讀'],
+ ['derma.jpg','AI 醫療・皮膚癌早期篩檢系統'],
+];
 function lpDom(name,color,desc){return `<div class="lp-dom" style="border-left-color:${color}"><h4>${name}</h4><p>${desc}</p></div>`;}
 async function renderLanding(){
   app.innerHTML=`<div class="lp">
@@ -483,18 +520,16 @@ async function renderLanding(){
       </div>
     </div>
 
-    <div class="lp-alt"><div class="lp-sec">
-      <div class="lp-kick">歷屆精選</div>
-      <div class="lp-h2">你不用一開始就很厲害，但要先開始</div>
-      <p class="lp-lead">這些是歷屆學員留下的學習歷程。每個人都是從第一行心得、第一張截圖開始——寫著寫著，就越來越厲害了。</p>
-      <div class="lp-gal">
-        ${lpGal('lp-talk.jpg','AI 醫療專題・7 篇心得')}
-        ${lpGal('lp-code.jpg','AI 運動科技・9 篇心得')}
-        ${lpGal('lp-vr.jpg','AI 影音創作・6 篇心得')}
-        ${lpGal('lp-drone.jpg','無人機實作・8 篇心得')}
+    <div class="lp-alt" style="overflow:hidden">
+      <div class="lp-sec" style="padding-bottom:10px">
+        <div class="lp-kick">歷屆精選</div>
+        <div class="lp-h2">你不用一開始就很厲害，但要先開始</div>
+        <p class="lp-lead">這些是歷屆學員真實留下的學習歷程與黑客松成果。每個人都是從第一行心得、第一張投影片開始——寫著寫著、做著做著，就越來越厲害了。</p>
       </div>
-      <p style="color:var(--muted); font-size:13px; margin-top:18px">＊畫面經模糊處理以保護學員隱私，呈現學習的樣貌而非內容。</p>
-    </div></div>
+      <div class="mq"><div class="mq-track mq-a">${JQUOTES.concat(JQUOTES).map(q=>jCard(q[0],q[1])).join('')}</div></div>
+      <div class="mq"><div class="mq-track mq-b">${DCOVERS.concat(DCOVERS).map(d=>dCard(d[0],d[1])).join('')}</div></div>
+      <div class="lp-sec" style="padding-top:16px;padding-bottom:40px"><p style="color:var(--muted);font-size:13px">＊內容摘自歷屆學員的學習歷程與黑客松成果簡報，姓名等個人資訊已隱去。</p></div>
+    </div>
 
     <div class="lp-sec">
       <div class="lp-kick">歷屆專題成果</div>
