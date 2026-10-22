@@ -455,7 +455,7 @@ async function renderLanding(){
           <span class="lp-btn main" onclick="go(ME?'home':'login')">進入我的歷程 ${icon('arrow')}</span>
           <span class="lp-btn ghost2" onclick="go('login')">登入</span>
         </div>
-        <span class="lp-forgot" onclick="go('login')">忘記編號或密碼？</span>
+        <span class="lp-forgot" onclick="showRecover()">忘記編號或密碼？</span>
       </div>
       <div class="lp-collage">
         ${lpTile('lp-vr.jpg','VR 運動科技')}
@@ -515,7 +515,7 @@ async function renderLanding(){
       <p>輸入你的學員編號，就能進入專屬於你的紀錄。</p>
       <div class="lp-cta">
         <span class="lp-btn main" onclick="go(ME?'home':'login')">進入我的歷程 ${icon('arrow')}</span>
-        <span class="lp-btn ghost2" onclick="go('login')">忘記編號／密碼</span>
+        <span class="lp-btn ghost2" onclick="showRecover()">忘記編號／密碼</span>
       </div>
     </div>
 
