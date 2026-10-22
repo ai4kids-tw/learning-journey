@@ -188,6 +188,80 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
   .card{box-shadow:none; border:1px solid #dde3e8; page-break-inside:avoid}
   .page{padding:0}
 }
+/* ========================= Landing 首頁（全寬響應式） ========================= */
+.landing-mode .app{max-width:100%; padding-bottom:0}
+.lp{color:var(--ink)}
+.lp a{text-decoration:none}
+.lp-navband{background:#fff; border-bottom:1px solid var(--line)}
+.lp-nav{max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:14px 22px}
+.lp-logo{height:26px}
+.lp-menu{display:flex; gap:24px; align-items:center; font-size:14.5px; color:var(--ink2)}
+.lp-menu a{color:inherit}
+.lp-menu .cur{color:var(--ink); font-weight:700; border-bottom:2px solid var(--cyan); padding-bottom:4px}
+.lp-menu .lp-login{background:var(--cyan); color:#fff; border-radius:9px; padding:8px 18px; font-weight:700}
+.lp-sec{max-width:1200px; margin:0 auto; padding:62px 24px}
+.lp-kick{color:var(--cyan-deep); font-size:13px; letter-spacing:2px; font-weight:800; margin-bottom:12px}
+.lp-h2{font-size:30px; font-weight:900; line-height:1.3; letter-spacing:-.3px}
+.lp-lead{color:var(--ink2); font-size:16.5px; line-height:1.85; margin-top:14px; max-width:740px}
+.lp-cta{display:flex; gap:12px; margin-top:26px; flex-wrap:wrap}
+.lp-btn{display:inline-flex; align-items:center; gap:8px; border-radius:12px; padding:14px 26px; font-size:16px; font-weight:800; cursor:pointer; transition:.14s}
+.lp-btn:active{transform:translateY(1px)}
+.lp-btn .ic{font-size:18px}
+.lp-btn.main{background:var(--cyan); color:#fff; box-shadow:0 8px 20px rgba(2,189,199,.28)}
+.lp-btn.ghost2{background:#fff; color:var(--ink); border:1.5px solid var(--line)}
+.lp-forgot{color:var(--cyan-deep); font-size:14px; font-weight:700; margin-top:15px; cursor:pointer; display:inline-block}
+.lp-hero{background:linear-gradient(180deg,#eaf3f9,var(--bg))}
+.lp-hero-in{max-width:1200px; margin:0 auto; padding:44px 24px 60px; display:grid; grid-template-columns:1fr 1fr; gap:44px; align-items:center}
+.lp-hero h1{font-size:46px; font-weight:900; line-height:1.2; letter-spacing:-.6px; margin:0; color:var(--dark)}
+.lp-hero h1 .c{color:var(--cyan)}
+.lp-hero .hsub{font-size:18.5px; color:var(--gray); margin-top:17px; line-height:1.7}
+.lp-collage{display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:13px; height:400px}
+.lp-tile{border-radius:16px; position:relative; background-size:cover; background-position:center; box-shadow:var(--sh-lg)}
+.lp-tile span{position:absolute; left:10px; bottom:10px; background:rgba(18,33,51,.82); color:#fff; font-size:12px; padding:3px 10px; border-radius:7px}
+.lp-stats{background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+.lp-stats-in{max-width:1100px; margin:0 auto; padding:42px 24px; display:grid; grid-template-columns:repeat(4,1fr); gap:20px; text-align:center}
+.lp-stat .n{font-size:42px; font-weight:900; line-height:1}
+.lp-stat .l{color:var(--ink2); font-size:14.5px; margin-top:7px}
+.lp-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:36px}
+.lp-fcard{background:#fff; border:1px solid var(--line); border-radius:16px; box-shadow:var(--sh-md); padding:26px}
+.lp-fcard .no{font-size:13px; font-weight:900; letter-spacing:1px}
+.lp-fcard h3{font-size:19px; font-weight:800; margin:10px 0 0; color:var(--ink)}
+.lp-fcard p{color:var(--ink2); font-size:14.5px; line-height:1.75; margin:10px 0 0}
+.lp-alt{background:#eef3f8}
+.lp-gal{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:36px}
+.lp-g{height:192px; border-radius:14px; overflow:hidden; position:relative; box-shadow:var(--sh-md)}
+.lp-g .bg{position:absolute; inset:0; background-size:cover; background-position:center; filter:blur(7px); transform:scale(1.16)}
+.lp-g .ov{position:absolute; inset:0; background:linear-gradient(180deg,rgba(18,33,51,.1),rgba(18,33,51,.78))}
+.lp-g .meta{position:absolute; left:14px; bottom:12px; color:#fff; z-index:2}
+.lp-g .meta b{font-size:15px; font-weight:700; display:block}
+.lp-g .meta small{font-size:12px; color:#d4dde7}
+.lp-g .pick{position:absolute; right:10px; top:10px; background:rgba(2,189,199,.95); color:#fff; font-size:11px; padding:3px 9px; border-radius:7px; z-index:2}
+.lp-doms{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:36px}
+.lp-dom{background:#fff; border:1px solid var(--line); border-left:4px solid var(--cyan); border-radius:16px; box-shadow:var(--sh-md); padding:20px 22px}
+.lp-dom h4{font-size:18px; font-weight:800; margin:0; color:var(--ink)}
+.lp-dom p{color:var(--ink2); font-size:14px; line-height:1.65; margin:8px 0 0}
+.lp-final{background:linear-gradient(100deg,var(--cyan),#0a9aa2); text-align:center; padding:66px 24px}
+.lp-final h2{color:#fff; font-size:29px; font-weight:900; margin:0}
+.lp-final p{color:#e3fbfc; font-size:16px; margin:12px 0 0}
+.lp-final .lp-cta{justify-content:center}
+.lp-final .lp-btn.main{background:#fff; color:var(--cyan-deep)}
+.lp-final .lp-btn.ghost2{background:transparent; color:#fff; border-color:rgba(255,255,255,.6)}
+.lp-footband{background:#fff; border-top:1px solid var(--line)}
+.lp-foot{max-width:1200px; margin:0 auto; padding:26px 24px; color:var(--muted); font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px}
+@media (max-width:860px){
+  .lp-hero-in{grid-template-columns:1fr; gap:30px}
+  .lp-hero h1{font-size:34px}
+  .lp-collage{height:300px}
+  .lp-h2{font-size:25px}
+  .lp-cards,.lp-doms{grid-template-columns:1fr}
+  .lp-gal{grid-template-columns:1fr 1fr}
+  .lp-sec{padding:48px 22px}
+}
+@media (max-width:700px){
+  .lp-menu a:not(.lp-login){display:none}
+  .lp-stats-in{grid-template-columns:1fr 1fr; gap:30px 16px}
+  .lp-stat .n{font-size:34px}
+}
 </style>
 </head>
 <body>
@@ -305,18 +379,19 @@ function fmtMD(s){const p=String(s).split('-');return p.length===3?(+p[1])+'/'+(
 const LOGO='assets/ai4kids-logo.png';
 
 /* ----------------------------- 路由 ----------------------------- */
-const ROUTES=['login','home','motivation','reflection','challenge','outcome','final','journey','admin'];
+const ROUTES=['landing','login','home','motivation','reflection','challenge','outcome','final','journey','admin'];
 function parseHash(){const h=location.hash.replace(/^#\//,'');const p=h.split('/');return {route:p[0]||'',params:p.slice(1)};}
 function currentRoute(){const r=parseHash().route;if(r==='view')return 'view';return ROUTES.includes(r)?r:(ME?'home':'login');}
 async function render(){
   const r=currentRoute();
-  if(r!=='login'&&r!=='admin'&&r!=='view'&&!ME){go('login');return;}
+  if(r!=='landing'&&r!=='login'&&r!=='admin'&&r!=='view'&&!ME){go('login');return;}
   document.body.classList.toggle('wide-mode', r==='admin'); // 後台桌機寬版
+  document.body.classList.toggle('landing-mode', r==='landing'); // landing 全寬
   window.scrollTo(0,0);
   renderTabbar(r);
   try{
     if(r==='view'){ await renderView(parseHash().params); }
-    else await ({login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
+    else await ({landing:renderLanding,login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
   }catch(e){ renderError(e); }
 }
 window.addEventListener('hashchange', render);
@@ -352,6 +427,103 @@ function closeModal(){document.querySelectorAll('.modal-bg').forEach(function(m)
 function computeProgress(j){const total=j.courses.length,refl=j.reflection.length,chal=j.challenge.length,out=j.outcome.length;
   const pct=Math.min(100,(j.motivation?20:0)+Math.round((total?refl/total:0)*30)+(chal>=1?15:0)+(out>=1?15:0)+(j.final?20:0));
   return {totalCourses:total,motivationDone:!!j.motivation,reflCount:refl,chalCount:chal,outCount:out,finalDone:!!j.final,pct:pct};}
+
+/* ============================ 0) Landing 首頁（未登入進站先看到） ============================ */
+const SITE_URL='https://ai4kids.ai';
+function lpTile(img,label){return `<div class="lp-tile" style="background-image:url('assets/${img}')"><span>${label}</span></div>`;}
+function lpGal(img,meta){return `<div class="lp-g"><div class="bg" style="background-image:url('assets/${img}')"></div><div class="ov"></div><span class="pick">精選</span><div class="meta"><b>學員歷程</b><small>${meta}</small></div></div>`;}
+function lpDom(name,color,desc){return `<div class="lp-dom" style="border-left-color:${color}"><h4>${name}</h4><p>${desc}</p></div>`;}
+async function renderLanding(){
+  app.innerHTML=`<div class="lp">
+    <div class="lp-navband"><div class="lp-nav">
+      <a href="${SITE_URL}" aria-label="回 AI4Kids 官網"><img class="lp-logo" src="${LOGO}" alt="AI4Kids" /></a>
+      <div class="lp-menu">
+        <a href="${SITE_URL}">營隊</a>
+        <a href="${SITE_URL}">線上課程</a>
+        <a class="cur" href="javascript:void(0)">學習歷程</a>
+        <a href="${SITE_URL}">關於我們</a>
+        <a class="lp-login" href="javascript:void(0)" onclick="go('login')">登入</a>
+      </div>
+    </div></div>
+
+    <div class="lp-hero"><div class="lp-hero-in">
+      <div>
+        <div class="lp-kick">AI4KIDS 學習歷程</div>
+        <h1>我的 <span class="c">AI</span> 學習歷程</h1>
+        <p class="hsub">探索 AI 的每一步，<br>收進屬於你的紀錄。</p>
+        <div class="lp-cta">
+          <span class="lp-btn main" onclick="go(ME?'home':'login')">進入我的歷程 ${icon('arrow')}</span>
+          <span class="lp-btn ghost2" onclick="go('login')">登入</span>
+        </div>
+        <span class="lp-forgot" onclick="go('login')">忘記編號或密碼？</span>
+      </div>
+      <div class="lp-collage">
+        ${lpTile('lp-vr.jpg','VR 運動科技')}
+        ${lpTile('lp-talk.jpg','小組討論')}
+        ${lpTile('lp-code.jpg','動手寫程式')}
+        ${lpTile('lp-drone.jpg','無人機實作')}
+      </div>
+    </div></div>
+
+    <div class="lp-stats"><div class="lp-stats-in">
+      <div class="lp-stat"><div class="n" style="color:var(--cyan)">100+</div><div class="l">梯次營隊</div></div>
+      <div class="lp-stat"><div class="n" style="color:#d79a1f">3,000+</div><div class="l">參與學員人次</div></div>
+      <div class="lp-stat"><div class="n" style="color:var(--pink)">600+</div><div class="l">學員專題成果</div></div>
+      <div class="lp-stat"><div class="n" style="color:var(--cyan-deep)">8</div><div class="l">合作大學團隊</div></div>
+    </div></div>
+
+    <div class="lp-sec">
+      <div class="lp-kick">怎麼記錄</div>
+      <div class="lp-h2">一套幫你把學習過程好好收下來的工具</div>
+      <p class="lp-lead">從報名動機、每一堂的心得、卡關與突破，到最後的專題成果與結業反思——寫到哪裡存到哪裡，隨時能匯出一份完整的 PDF，也能一鍵寄給爸媽。</p>
+      <div class="lp-cards">
+        <div class="lp-fcard" style="border-top:4px solid var(--cyan)"><div class="no" style="color:var(--cyan)">01</div><h3>逐堂記下心得</h3><p>每堂課後寫下學到什麼、對什麼有感覺，系統自動依課表幫你排好，不怕漏掉哪一堂。</p></div>
+        <div class="lp-fcard" style="border-top:4px solid var(--yellow)"><div class="no" style="color:#d79a1f">02</div><h3>上傳你的作品</h3><p>把專題截圖、簡報、作品照片傳上來，和心得放在一起，成果一目了然。</p></div>
+        <div class="lp-fcard" style="border-top:4px solid var(--pink)"><div class="no" style="color:var(--pink)">03</div><h3>匯出與分享</h3><p>營隊結束，一鍵產生完整 PDF，可以自己留存、上傳學習歷程，也能寄給家人。</p></div>
+      </div>
+    </div>
+
+    <div class="lp-alt"><div class="lp-sec">
+      <div class="lp-kick">歷屆精選</div>
+      <div class="lp-h2">你不用一開始就很厲害，但要先開始</div>
+      <p class="lp-lead">這些是歷屆學員留下的學習歷程。每個人都是從第一行心得、第一張截圖開始——寫著寫著，就越來越厲害了。</p>
+      <div class="lp-gal">
+        ${lpGal('lp-talk.jpg','AI 醫療專題・7 篇心得')}
+        ${lpGal('lp-code.jpg','AI 運動科技・9 篇心得')}
+        ${lpGal('lp-vr.jpg','AI 影音創作・6 篇心得')}
+        ${lpGal('lp-drone.jpg','無人機實作・8 篇心得')}
+      </div>
+      <p style="color:var(--muted); font-size:13px; margin-top:18px">＊畫面經模糊處理以保護學員隱私，呈現學習的樣貌而非內容。</p>
+    </div></div>
+
+    <div class="lp-sec">
+      <div class="lp-kick">歷屆專題成果</div>
+      <div class="lp-h2">AI 不只是寫程式，是跨進每一個你好奇的領域</div>
+      <p class="lp-lead">歷屆學員用 AI 做過醫療、運動科技、無人機、海洋生物、影音創作、機器人等各種主題的專題，在黑客松上分組發表，做出屬於自己的成果。</p>
+      <div class="lp-doms">
+        ${lpDom('AI 醫療','var(--pink)','用影像辨識判讀病徵、打造衛教小幫手，把 AI 帶進健康生活。')}
+        ${lpDom('運動科技','var(--cyan)','結合 VR 與感測資料，分析動作、設計運動訓練的互動體驗。')}
+        ${lpDom('無人機','var(--yellow)','程式控制飛行、隊形與任務，在球場上完成無人機足球對抗。')}
+        ${lpDom('海洋生物','var(--cyan-deep)','辨識海洋物種、整理生態資料，用 AI 認識我們身邊的海。')}
+        ${lpDom('影音創作','var(--pink)','從腳本、配音到剪輯，用生成式 AI 做出一支完整的作品。')}
+        ${lpDom('機器人','var(--cyan)','讓機器人看得見、聽得懂、動得了，完成自己設計的任務。')}
+      </div>
+    </div>
+
+    <div class="lp-final">
+      <h2>現在，換你開始寫下你的 AI 學習歷程</h2>
+      <p>輸入你的學員編號，就能進入專屬於你的紀錄。</p>
+      <div class="lp-cta">
+        <span class="lp-btn main" onclick="go(ME?'home':'login')">進入我的歷程 ${icon('arrow')}</span>
+        <span class="lp-btn ghost2" onclick="go('login')">忘記編號／密碼</span>
+      </div>
+    </div>
+
+    <div class="lp-footband"><div class="lp-foot">
+      <span>© 2026 AI4Kids 愛奇智慧科技</span><span>學員學習歷程系統</span>
+    </div></div>
+  </div>`;
+}
 
 /* ============================ 1) 登入 ============================ */
 let LOOKUP=null; // 暫存名冊查詢結果
@@ -862,7 +1034,7 @@ async function renderView(params){
       <div class="card noprint" style="text-align:center;background:var(--cyan-soft);border:0">
         <p class="sub" style="margin:0 0 4px">想繼續補充或修改?</p>
         <p style="font-weight:700;margin:0">請學員用學員編號 <b style="color:var(--cyan-deep)">${esc(sid)}</b> 登入平台編輯</p>
-        <a class="btn line" style="margin-top:12px;display:inline-flex;width:auto" href="https://ai4kids-tw.github.io/learning-journey/">前往登入平台 ${icon('arrow')}</a>
+        <a class="btn line" style="margin-top:12px;display:inline-flex;width:auto" href="https://portfolio.ai4kids.ai/">前往登入平台 ${icon('arrow')}</a>
       </div>
     </div>`;
   }catch(e){
@@ -1114,7 +1286,7 @@ async function doAdminReset(sid){
 }
 
 /* ----------------------------- 啟動 ----------------------------- */
-if(!location.hash)location.hash=ME?'#/home':'#/login';
+if(!location.hash)location.hash=ME?'#/home':'#/landing';
 render();
 </script>
 </body>
