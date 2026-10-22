@@ -1011,7 +1011,21 @@ function journeyDocHtml(j){
       ${j.challenge.length?j.challenge.map(c=>`<div style="margin-bottom:11px"><b>${c.status==='solved'?icon('check'):icon('puzzle')} ${esc(c.problem)}</b>${c.solution?`<div class="hint" style="margin-top:4px">${icon('spark')}${esc(c.solution)}</div>`:''}</div>`).join(''):'<div class="empty">尚未紀錄</div>'}</div>
     <div class="jrow"><div class="lab">${ji('outcome')}成果作品牆・${j.outcome.length}</div>
       ${j.outcome.length?`<div class="wall">${j.outcome.map(workCard).join('')}</div>`:'<div class="empty">尚未上傳</div>'}</div>
+    ${(j.hackathon&&j.hackathon.length)?`<div class="jrow"><div class="lab"><span class="ji bg-yellow">${icon('award')}</span>黑客松成果・${j.hackathon.length}</div>
+      ${j.hackathon.map(hackCard).join('')}</div>`:''}
     <div class="jrow"><div class="lab">${ji('final')}結業反思</div>${j.final?`<div>${esc(j.final.summaryText)}</div>`:'<div class="empty">尚未填寫</div>'}</div>`;
+}
+function hackCard(t){
+  const topic=t.topic?`<span class="chip">${esc(t.topic)}</span>`:'';
+  const rank=t.rank?`<span class="chip" style="background:var(--pink-soft);color:#c41f44;border-color:#f5c6d2">${icon('award')}${esc(t.rank)}</span>`:'';
+  const deck=t.deckUrl?`<a class="btn line sm noprint" style="width:auto;margin-top:10px" href="${esc(t.deckUrl)}" target="_blank" rel="noopener">${icon('book')}看成果簡報</a>`:'';
+  const photo=t.photoUrl?`<a class="btn line sm noprint" style="width:auto;margin-top:10px;margin-left:8px" href="${esc(t.photoUrl)}" target="_blank" rel="noopener">${icon('image')}活動照片</a>`:'';
+  return `<div class="chal" style="border-color:#f0dcad;background:#fffdf6;margin-bottom:12px">
+    <div style="font-weight:800;font-size:16px">${esc(t.projectTitle||'黑客松專題')}</div>
+    ${t.teamName?`<div class="hint" style="margin-top:3px">${icon('user')}${esc(t.teamName)}</div>`:''}
+    <div class="chips" style="margin-top:8px">${topic}${rank}</div>
+    ${deck}${photo}
+  </div>`;
 }
 async function renderJourney(){
   loadingScreen();
@@ -1115,6 +1129,7 @@ function renderAdminTable(d){
       </div>
       <p class="sub">${esc(ADMIN.campName)}・${esc(d.batch)}　|　${d.total} 位學員，平均完成 ${avg}%</p>
       <button class="btn line" style="margin-top:10px" onclick="openCampNotify()">${icon('mail')}營後通知信（家長＋學員）</button>
+      <button class="btn line" style="margin-top:10px" onclick="openHackathon()">${icon('award')}黑客松成果管理</button>
     </div>
     <div class="card"><div class="h2"><span class="badge-ic bg-cyan">${icon('user')}</span>學員完成率（${d.total}）</div>
       <p class="sub">點任一列可開啟學員資料與功能</p>
@@ -1122,6 +1137,93 @@ function renderAdminTable(d){
     </div>
   </div>`;
 }
+// ===== 黑客松成果管理 =====
+let HACKTEAMS=[], HACKROSTER=[];
+const HACK_TOPICS=['醫療','運動科技','無人機','海洋生物','影音創作','機器人','其他'];
+const HACK_RANKS=['金獎','銀獎','銅獎','優選','入選','參賽'];
+async function openHackathon(){
+  loadingScreen();
+  try{
+    const [list,roster]=await Promise.all([
+      apiGet('adminHackathonList',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch}),
+      apiGet('adminRoster',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch})
+    ]);
+    HACKTEAMS=list.teams||[]; HACKROSTER=roster.students||[];
+    renderHackathonAdmin();
+  }catch(e){ toast(e.message,true); renderAdmin(); }
+}
+function renderHackathonAdmin(){
+  const nameOf=sid=>{const r=HACKROSTER.find(x=>String(x.studentId).toUpperCase()===String(sid).toUpperCase());return r?r.name:sid;};
+  const cards=HACKTEAMS.map(t=>{
+    const mem=String(t.members||'').split(',').map(x=>x.trim()).filter(Boolean);
+    return `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><div style="font-weight:800;font-size:16px">${esc(t.projectTitle||'（未命名專題）')}</div>
+        <div class="chips" style="margin-top:6px">${t.teamName?`<span class="chip bg-gray" style="background:var(--gray-soft);color:var(--gray);border-color:#e2e6ea">${esc(t.teamName)}</span>`:''}${t.topic?`<span class="chip">${esc(t.topic)}</span>`:''}${t.rank?`<span class="chip" style="background:var(--pink-soft);color:#c41f44;border-color:#f5c6d2">${esc(t.rank)}</span>`:''}</div></div>
+        <div style="flex:none;white-space:nowrap">
+          <button class="btn line sm" style="width:auto;padding:6px 12px" onclick="editHackTeam('${esc(t.teamId)}')">編輯</button>
+          <button class="btn line sm" style="width:auto;padding:6px 12px;color:var(--pink);border-color:var(--pink)" onclick="delHackTeam('${esc(t.teamId)}')">刪除</button>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:8px">${icon('user')}隊員 ${mem.length}：${mem.map(nameOf).map(esc).join('、')||'—'}</div>
+      ${t.deckUrl?`<div class="hint" style="margin-top:4px">${icon('book')}簡報：<a href="${esc(t.deckUrl)}" target="_blank" rel="noopener" style="color:var(--cyan-deep)">連結</a></div>`:''}
+    </div>`;
+  }).join('');
+  app.innerHTML=`<div class="page">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="h2"><span class="badge-ic bg-yellow">${icon('award')}</span>黑客松成果</div>
+        <button class="switch-btn" onclick="renderAdmin()">${icon('switch')}返回</button>
+      </div>
+      <p class="sub">${esc(ADMIN.campName)}・${esc(ADMIN.batch)}　|　共 ${HACKTEAMS.length} 隊</p>
+      <button class="btn" style="margin-top:12px" onclick="editHackTeam('')">${icon('plus')}新增一隊</button>
+    </div>
+    ${HACKTEAMS.length?cards:'<div class="card"><div class="empty">這個梯次還沒有黑客松成果，點「新增一隊」開始建立。</div></div>'}
+  </div>`;
+}
+function editHackTeam(teamId){
+  const t=HACKTEAMS.find(x=>String(x.teamId)===String(teamId))||{};
+  const sel=new Set(String(t.members||'').split(',').map(x=>x.trim().toUpperCase()).filter(Boolean));
+  const memBoxes=HACKROSTER.map(r=>{const on=sel.has(String(r.studentId).toUpperCase());
+    return `<label class="opt ${on?'on':''}" style="cursor:pointer"><input type="checkbox" value="${esc(r.studentId)}" ${on?'checked':''} style="display:none" onchange="this.parentNode.classList.toggle('on',this.checked)">${esc(r.name)} <span style="color:var(--muted);font-size:12px">${esc(r.studentId)}</span></label>`}).join('');
+  showModal(`<div class="mic bg-yellow">${icon('award')}</div><h3>${teamId?'編輯':'新增'}黑客松成果</h3>
+    <input type="hidden" id="hkId" value="${esc(t.teamId||'')}">
+    <label class="fld">專題名稱 *</label><input id="hkTitle" class="input" value="${esc(t.projectTitle||'')}" placeholder="例：AI 心律守門員">
+    <div class="row"><div><label class="fld">主題</label><select id="hkTopic" class="input">${['',...HACK_TOPICS].map(x=>`<option ${x===(t.topic||'')?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+      <div><label class="fld">名次／獎項</label><select id="hkRank" class="input">${['',...HACK_RANKS].map(x=>`<option ${x===(t.rank||'')?'selected':''}>${esc(x)}</option>`).join('')}</select></div></div>
+    <label class="fld">隊名（選填）</label><input id="hkTeam" class="input" value="${esc(t.teamName||'')}" placeholder="例：第三組 / 心電小隊">
+    <label class="fld">成果簡報連結（選填）</label><input id="hkDeck" class="input" value="${esc(t.deckUrl||'')}" placeholder="Slides / Drive 連結">
+    <label class="fld">活動照片連結（選填）</label><input id="hkPhoto" class="input" value="${esc(t.photoUrl||'')}" placeholder="Drive 連結">
+    <label class="fld">隊員（勾選，可多位）</label><div class="opts" id="hkMembers">${memBoxes||'<span class="sub">這個梯次名冊是空的</span>'}</div>
+    <div class="warn" id="hkWarn"></div>
+    <button class="btn" id="hkSave" style="margin-top:14px" onclick="saveHackTeam()">儲存</button>`,'wide');
+}
+async function saveHackTeam(){
+  const title=document.getElementById('hkTitle').value.trim();
+  if(!title){document.getElementById('hkWarn').innerHTML=icon('info')+'請填專題名稱';return;}
+  const members=[...document.querySelectorAll('#hkMembers input:checked')].map(c=>c.value).join(',');
+  const b=document.getElementById('hkSave'); if(b){b.disabled=true;b.textContent='儲存中…';}
+  try{
+    await apiGet('adminHackathonSave',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch,
+      teamId:document.getElementById('hkId').value,projectTitle:title,
+      topic:document.getElementById('hkTopic').value,rank:document.getElementById('hkRank').value,
+      teamName:document.getElementById('hkTeam').value.trim(),deckUrl:document.getElementById('hkDeck').value.trim(),
+      photoUrl:document.getElementById('hkPhoto').value.trim(),members:members});
+    closeModal();toast('已儲存');openHackathon();
+  }catch(e){document.getElementById('hkWarn').innerHTML=icon('info')+esc(e.message);if(b){b.disabled=false;b.textContent='儲存';}}
+}
+function delHackTeam(teamId){
+  const t=HACKTEAMS.find(x=>String(x.teamId)===String(teamId))||{};
+  showModal(`<div class="mic bg-pink">${icon('info')}</div><h3>刪除這隊？</h3>
+    <p class="sub">「${esc(t.projectTitle||'')}」將從黑客松成果移除，隊員歷程就不再顯示這筆。此動作無法復原。</p>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">取消</button>
+      <button class="btn pink" onclick="doDelHackTeam('${esc(teamId)}')">刪除</button></div>`);
+}
+async function doDelHackTeam(teamId){
+  try{ await apiGet('adminHackathonDelete',{passcode:ADMIN.passcode,teamId:teamId}); closeModal(); toast('已刪除'); openHackathon(); }
+  catch(e){ closeModal(); toast(e.message,true); }
+}
+
 // ===== TA 後台 v2：搜尋 / 詳情 / 補資料 / 寄送 =====
 let ADMIN_SEARCH_T=null;
 function onAdminSearch(v){ clearTimeout(ADMIN_SEARCH_T); ADMIN_SEARCH_T=setTimeout(()=>doAdminSearch(v),320); }
