@@ -193,12 +193,17 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
 .lp{color:var(--ink)}
 .lp a{text-decoration:none}
 .lp-navband{background:#fff; border-bottom:1px solid var(--line)}
-.lp-nav{max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; padding:14px 22px}
-.lp-logo{height:26px}
-.lp-menu{display:flex; gap:24px; align-items:center; font-size:14.5px; color:var(--ink2)}
-.lp-menu a{color:inherit}
-.lp-menu .cur{color:var(--ink); font-weight:700; border-bottom:2px solid var(--cyan); padding-bottom:4px}
-.lp-menu .lp-login{background:var(--cyan); color:#fff; border-radius:9px; padding:8px 18px; font-weight:700}
+.lp-nav{max-width:1260px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 24px}
+.lp-logo{height:26px; display:block}
+.lp-menu{display:flex; gap:21px; align-items:center; font-size:14.5px; color:#3a4a5e}
+.lp-menu a{color:inherit; display:inline-flex; align-items:center; gap:2px; white-space:nowrap}
+.lp-menu .cur{color:var(--cyan-deep); font-weight:700; border-bottom:2px solid var(--cyan); padding-bottom:3px}
+.lp-util{display:flex; align-items:center; gap:17px; color:#3a4a5e; font-size:14px}
+.lp-util a{color:inherit; display:inline-flex; align-items:center; gap:3px}
+.lp-lang{white-space:nowrap}
+.nic{width:14px; height:14px; opacity:.75}
+.uic{width:21px; height:21px}
+.lp-ic .ic{width:21px; height:21px}
 .lp-sec{max-width:1200px; margin:0 auto; padding:62px 24px}
 .lp-kick{color:var(--cyan-deep); font-size:13px; letter-spacing:2px; font-weight:800; margin-bottom:12px}
 .lp-h2{font-size:30px; font-weight:900; line-height:1.3; letter-spacing:-.3px}
@@ -273,8 +278,10 @@ select.input{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xm
   .lp-gal{grid-template-columns:1fr 1fr}
   .lp-sec{padding:48px 22px}
 }
+@media (max-width:1000px){
+  .lp-menu,.lp-util .lp-lang{display:none}
+}
 @media (max-width:700px){
-  .lp-menu a:not(.lp-login){display:none}
   .lp-stats-in{grid-template-columns:1fr 1fr; gap:30px 16px}
   .lp-stat .n{font-size:34px}
 }
@@ -446,6 +453,9 @@ function computeProgress(j){const total=j.courses.length,refl=j.reflection.lengt
 
 /* ============================ 0) Landing 首頁（未登入進站先看到） ============================ */
 const SITE_URL='https://ai4kids.ai';
+const NAV_CARET='<svg class="nic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+const NAV_SEARCH='<svg class="uic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+const NAV_CART='<svg class="uic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.3"/><circle cx="19" cy="20" r="1.3"/><path d="M2 3h3l2.2 11a1.6 1.6 0 0 0 1.6 1.3h8.5a1.6 1.6 0 0 0 1.6-1.3L21 7H6"/></svg>';
 function lpTile(img,label){return `<div class="lp-tile" style="background-image:url('assets/${img}')"><span>${label}</span></div>`;}
 function jCard(text,by){return `<div class="jcard"><div class="qt">&ldquo;</div><p>${esc(text)}</p><div class="by">${icon('user')}${esc(by)}</div></div>`;}
 function dCard(img,cap){return `<div class="dcard"><img src="assets/featured/${img}" alt="" loading="lazy"><div class="cap">${esc(cap)}</div></div>`;}
@@ -473,13 +483,20 @@ function lpDom(name,color,desc){return `<div class="lp-dom" style="border-left-c
 async function renderLanding(){
   app.innerHTML=`<div class="lp">
     <div class="lp-navband"><div class="lp-nav">
-      <a href="${SITE_URL}" aria-label="回 AI4Kids 官網"><img class="lp-logo" src="${LOGO}" alt="AI4Kids" /></a>
+      <a class="lp-logo-a" href="${SITE_URL}/" aria-label="AI4Kids 官網"><img class="lp-logo" src="${LOGO}" alt="AI4Kids" /></a>
       <div class="lp-menu">
-        <a href="${SITE_URL}">營隊</a>
-        <a href="${SITE_URL}">線上課程</a>
+        <a href="${SITE_URL}/pages/ai-camp">青少年AI課程/營隊 ${NAV_CARET}</a>
+        <a href="${SITE_URL}/collections/codecombat-courses">中小學程式教育 ${NAV_CARET}</a>
         <a class="cur" href="javascript:void(0)">學習歷程</a>
-        <a href="${SITE_URL}">關於我們</a>
-        <a class="lp-login" href="javascript:void(0)" onclick="go('login')">登入</a>
+        <a href="${SITE_URL}/a/members">我的課程</a>
+        <a href="${SITE_URL}/pages/yif-competition">競賽活動 ${NAV_CARET}</a>
+        <a href="${SITE_URL}/blogs/blog">網誌文章</a>
+      </div>
+      <div class="lp-util">
+        <a class="lp-lang" href="${SITE_URL}/">繁體中文 ${NAV_CARET}</a>
+        <a class="lp-ic" href="${SITE_URL}/search" aria-label="搜尋">${NAV_SEARCH}</a>
+        <a class="lp-ic" href="javascript:void(0)" onclick="go('login')" aria-label="登入我的歷程">${icon('user')}</a>
+        <a class="lp-ic" href="${SITE_URL}/cart" aria-label="購物車">${NAV_CART}</a>
       </div>
     </div></div>
 
