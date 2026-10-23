@@ -299,7 +299,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbwDkqs06qVhzWhwc0rL6Mod
 
 /* ----------------------------- API 層 ----------------------------- */
 // 可安全重試的 POST（冪等）；append 類（addChallenge/saveOutcome）與 register 不重試，避免重複
-const IDEMPOTENT_POST=new Set(['login','saveMotivation','saveReflection','saveFinal','updateChallenge','sendToParent','adminSendParents']);
+const IDEMPOTENT_POST=new Set(['login','saveMotivation','saveReflection','saveFinal','updateChallenge','sendToParent','adminSendParents','submitHackMine']);
 // 視為「暫時性忙碌」的錯誤 → 退避後重試
 const TRANSIENT=/同時呼叫|concurrent|too many|逾時|timeout|忙碌|Lock|invoked too many/i;
 // iOS/瀏覽器的網路層失敗訊息（fetch 被中斷、掉線、連線取消）→ 也視為可重試，並轉成中文
@@ -402,7 +402,7 @@ function fmtMD(s){const p=String(s).split('-');return p.length===3?(+p[1])+'/'+(
 const LOGO='assets/ai4kids-logo.png';
 
 /* ----------------------------- 路由 ----------------------------- */
-const ROUTES=['landing','login','home','motivation','reflection','challenge','outcome','final','journey','admin'];
+const ROUTES=['landing','login','home','motivation','reflection','challenge','outcome','final','journey','hacksubmit','admin'];
 function parseHash(){const h=location.hash.replace(/^#\//,'');const p=h.split('/');return {route:p[0]||'',params:p.slice(1)};}
 function currentRoute(){const r=parseHash().route;if(r==='view')return 'view';return ROUTES.includes(r)?r:(ME?'home':'login');}
 async function render(){
@@ -414,7 +414,7 @@ async function render(){
   renderTabbar(r);
   try{
     if(r==='view'){ await renderView(parseHash().params); }
-    else await ({landing:renderLanding,login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,admin:renderAdmin}[r])();
+    else await ({landing:renderLanding,login:renderLogin,home:renderHome,motivation:renderMotivation,reflection:renderReflection,challenge:renderChallenge,outcome:renderOutcome,final:renderFinal,journey:renderJourney,hacksubmit:renderHackSubmit,admin:renderAdmin}[r])();
   }catch(e){ renderError(e); }
 }
 window.addEventListener('hashchange', render);
@@ -705,6 +705,11 @@ async function renderHome(){
         <li class="${p.outCount>=1?'ok':''}"><span class="tick">${p.outCount>=1?icon('check'):''}</span><span class="lbl">上傳學習成果（已 ${p.outCount} 件）</span></li>
       </ul>
     </div>
+    ${j.hackGroups>0?`<div class="card" style="background:linear-gradient(140deg,var(--yellow-soft),#fff);border:1.5px solid #f0dcad">
+      <div class="h2"><span class="badge-ic bg-yellow">${icon('award')}</span>交黑客松成果</div>
+      <p class="sub">選你的組別、貼上小組簡報連結，就會收進你的學習歷程。同組每人各交一次即可。</p>
+      <button class="btn" style="margin-top:12px;background:linear-gradient(135deg,var(--yellow),#dba63a);box-shadow:0 8px 20px rgba(232,186,81,.3)" onclick="go('hacksubmit')">${icon('upload')}去交黑客松成果</button>
+    </div>`:''}
     <div class="grid">
       ${tile('motivation',p.motivationDone?'已完成':'待填')}
       ${tile('reflection',`<b>${p.reflCount}</b> / ${p.totalCourses} 堂`)}
@@ -716,6 +721,66 @@ async function renderHome(){
   </div>`;
 }
 function tile(key,badge){const s=SECTION[key];return `<button class="tile" onclick="go('${key}')"><div class="ti-ic ${s.bg}">${icon(s.ic)}</div><div class="ti-t">${s.name}</div><div class="ti-badge">${badge}</div></button>`;}
+
+/* ============================ 交黑客松成果（學生自助） ============================ */
+async function renderHackSubmit(){
+  loadingScreen();
+  let info; try{ info=await apiGet('getHackInfo', authp()); }catch(e){ renderError(e); return; }
+  const N=info.groupCount||0, mine=info.myTeam||null;
+  if(N<=0){
+    app.innerHTML=topbar()+`<div class="page"><div class="card" style="text-align:center;margin-top:20px">
+      <div class="mic bg-yellow" style="margin:0 auto 12px">${icon('award')}</div>
+      <div class="h2" style="justify-content:center">黑客松成果上傳尚未開放</div>
+      <p class="sub">等助教設定好組數就能上傳囉，請晚點再回來。</p>
+      <button class="btn ghost" style="margin-top:16px" onclick="go('home')">回首頁</button></div></div>`;
+    return;
+  }
+  const opts=Array.from({length:N},(_,i)=>`第${i+1}組`);
+  const cur=mine?mine.teamName:'';
+  app.innerHTML=topbar()+`<div class="page"><div class="card">
+    <div class="h2"><span class="badge-ic bg-yellow">${icon('award')}</span>交黑客松成果</div>
+    <p class="sub">選你的組別、貼上小組簡報連結就完成囉！同組每個人都交一次，系統會自動把你加進隊伍。</p>
+    <label class="fld">你的組別</label>
+    <select id="hsGroup" class="input" onchange="hsPickGroup()"><option value="">請選擇…</option>${opts.map(o=>`<option ${o===cur?'selected':''}>${o}</option>`).join('')}</select>
+    <div id="hsExisting" class="hint" style="margin-top:8px"></div>
+    <label class="fld">專題名稱</label><input id="hsTitle" class="input" value="${mine?esc(mine.projectTitle||''):''}" placeholder="例：AI 心律守門員" />
+    <label class="fld">主題</label><select id="hsTopic" class="input">${['',...HACK_TOPICS].map(x=>`<option ${mine&&x===mine.topic?'selected':''}>${esc(x)}</option>`).join('')}</select>
+    <label class="fld">小組簡報分享連結</label><input id="hsDeck" class="input" value="${mine?esc(mine.deckUrl||''):''}" placeholder="貼上 Canva / Google Slides 連結" />
+    <p class="hint">${icon('info')}記得把簡報分享權限設成「知道連結的人可以檢視」，不然同學和家長會打不開。</p>
+    <div class="warn" id="hsWarn"></div>
+    <button class="btn" id="hsBtn" style="margin-top:8px" onclick="submitHack()">${mine?'更新我的黑客松成果':'送出'}</button>
+  </div></div>`;
+  if(cur) hsPickGroup();
+}
+async function hsPickGroup(){
+  const tn=(document.getElementById('hsGroup')||{}).value||'';
+  const box=document.getElementById('hsExisting'); if(box) box.innerHTML='';
+  if(!tn) return;
+  try{
+    const t=(await apiGet('getHackTeam', authp({teamName:tn}))).team;
+    if(t && box) box.innerHTML=`${icon('user')}${esc(tn)} 已有 ${t.memberCount} 人上傳${t.iAmIn?'（包含你）':''}；下方已帶出目前的專題與連結，可直接確認或修改。`;
+    if(t){ const T=document.getElementById('hsTitle'),P=document.getElementById('hsTopic'),D=document.getElementById('hsDeck');
+      if(T&&!T.value&&t.projectTitle)T.value=t.projectTitle;
+      if(P&&!P.value&&t.topic)P.value=t.topic;
+      if(D&&!D.value&&t.deckUrl)D.value=t.deckUrl; }
+  }catch(e){}
+}
+async function submitHack(){
+  const tn=document.getElementById('hsGroup').value;
+  if(!tn){document.getElementById('hsWarn').innerHTML=icon('info')+'請先選你的組別';return;}
+  const b=document.getElementById('hsBtn'); if(b){b.disabled=true;b.textContent='送出中…';}
+  try{
+    const r=await apiPost('submitHackMine', authp({teamName:tn,
+      projectTitle:document.getElementById('hsTitle').value.trim(),
+      topic:document.getElementById('hsTopic').value,
+      deckUrl:document.getElementById('hsDeck').value.trim()}));
+    invalidateJourney();
+    showModal(`<div class="mic bg-cyan">${icon('check')}</div><h3>已交出！</h3>
+      <p class="sub">你已加入 <b>${esc(tn)}</b>，這隊目前有 ${r.team.memberCount} 人上傳。成果已收進你的學習歷程。</p>
+      <button class="btn" onclick="closeModal();go('journey')">看我的歷程</button>
+      <button class="btn ghost" style="margin-top:9px" onclick="closeModal();go('home')">回首頁</button>`);
+  }catch(e){document.getElementById('hsWarn').innerHTML=icon('info')+esc(e.message);if(b){b.disabled=false;b.textContent='送出';}}
+}
 
 /* ============================ 聊天引擎 ============================ */
 let CHAT={draft:null,script:null};
@@ -1190,7 +1255,7 @@ function renderAdminTable(d){
   </div>`;
 }
 // ===== 黑客松成果管理 =====
-let HACKTEAMS=[], HACKROSTER=[];
+let HACKTEAMS=[], HACKROSTER=[], HACKGROUPS=0;
 const HACK_TOPICS=['醫療','運動科技','無人機','海洋生物','影音創作','機器人','其他'];
 const HACK_RANKS=['金獎','銀獎','銅獎','優選','入選','參賽'];
 async function openHackathon(){
@@ -1200,9 +1265,16 @@ async function openHackathon(){
       apiGet('adminHackathonList',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch}),
       apiGet('adminRoster',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch})
     ]);
-    HACKTEAMS=list.teams||[]; HACKROSTER=roster.students||[];
+    HACKTEAMS=list.teams||[]; HACKROSTER=roster.students||[]; HACKGROUPS=list.groupCount||0;
     renderHackathonAdmin();
   }catch(e){ toast(e.message,true); renderAdmin(); }
+}
+async function saveHackGroups(){
+  const n=parseInt(document.getElementById('hkGroups').value,10);
+  if(isNaN(n)||n<0){toast('請輸入 0 以上的整數',true);return;}
+  try{ await apiGet('adminSetHackGroups',{passcode:ADMIN.passcode,campId:ADMIN.campId,batch:ADMIN.batch,groupCount:n});
+    HACKGROUPS=n; toast('已設定組數 '+n); renderHackathonAdmin();
+  }catch(e){ toast(e.message,true); }
 }
 function renderHackathonAdmin(){
   const nameOf=sid=>{const r=HACKROSTER.find(x=>String(x.studentId).toUpperCase()===String(sid).toUpperCase());return r?r.name:sid;};
@@ -1228,7 +1300,13 @@ function renderHackathonAdmin(){
         <button class="switch-btn" onclick="renderAdmin()">${icon('switch')}返回</button>
       </div>
       <p class="sub">${esc(ADMIN.campName)}・${esc(ADMIN.batch)}　|　共 ${HACKTEAMS.length} 隊</p>
-      <button class="btn" style="margin-top:12px" onclick="editHackTeam('')">${icon('plus')}新增一隊</button>
+      <div style="display:flex;align-items:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap">
+        <div><label class="fld" style="margin:0 0 6px">本營組數（學生自助上傳用，決定下拉 1~N）</label>
+          <input id="hkGroups" class="input" type="number" min="0" max="40" value="${HACKGROUPS||''}" placeholder="例：12" style="width:120px" /></div>
+        <button class="btn line sm" style="width:auto;padding:12px 16px" onclick="saveHackGroups()">儲存組數</button>
+      </div>
+      <p class="hint">${icon('info')}設定後，學生在 app 的「交黑客松成果」就能選第1~${HACKGROUPS||'N'}組自助上傳；設 0 則關閉上傳。</p>
+      <button class="btn" style="margin-top:12px" onclick="editHackTeam('')">${icon('plus')}手動新增一隊</button>
     </div>
     ${HACKTEAMS.length?cards:'<div class="card"><div class="empty">這個梯次還沒有黑客松成果，點「新增一隊」開始建立。</div></div>'}
   </div>`;
